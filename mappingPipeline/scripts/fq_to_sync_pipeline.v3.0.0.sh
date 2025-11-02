@@ -574,7 +574,7 @@ if [ $do_snape -eq "1" ]; then
     echo $chrs
     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-    /opt/DESTv2/mappingPipeline/scripts/Mpileup2Snape.sh \
+    /opt/DESTv3/mappingPipeline/scripts/Mpileup2Snape.sh \
     ${sample}.${prefix}_mpileup.txt \
     $output \
     $sample.${prefix} \

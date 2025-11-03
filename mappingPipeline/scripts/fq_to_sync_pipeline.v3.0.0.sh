@@ -225,6 +225,20 @@ check_exit_status () {
   	echo "Processing ---> paired end run"
   fi
 
+  ### Define reads
+    if [ $do_single_end -eq "0"  ]; then
+      read1=$1; shift
+      read2=$1; shift
+      sample=$1; shift
+      output=$1; shift
+    fi
+
+    if [ $do_single_end -eq "1" ]; then
+      read1=$1; shift
+      sample=$1; shift
+      output=$1; shift
+    fi
+
   set -- "${POSITIONAL[@]}"
 
   echo -e "This is DEST v. ${version} \n Parameters as interpreted + those assumed by default --> \n"
@@ -275,19 +289,6 @@ check_exit_status () {
 ### do_map? Process and bam reads? ###
 ######################################
   if [ $do_map -eq "1" ]; then
-    ### Define reads
-      if [ $do_single_end -eq "0"  ]; then
-        read1=$1; shift
-        read2=$1; shift
-        sample=$1; shift
-        output=$1; shift
-      fi
-
-      if [ $do_single_end -eq "1" ]; then
-        read1=$1; shift
-        sample=$1; shift
-        output=$1; shift
-      fi
 
     ### mkdirs
       if [ ! -d $output/$sample/ ]; then

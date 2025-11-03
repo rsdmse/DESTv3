@@ -574,72 +574,120 @@ if [ $do_snape -eq "1" ]; then
     echo $chrs
     refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-    /opt/DESTv3/mappingPipeline/scripts/Mpileup2Snape.sh \
-    ${sample}.${prefix}_mpileup.txt \
-    $output \
-    $sample.${prefix} \
-    $theta \
-    $D \
-    $priortype \
-    $fold \
-    $nflies
+    ### infer sex ratio
+      output=/scratch/aob2x/dest_v3_output/
+      sample=DE_Bad_Bro_1_2020-07-16
+      prefix=sim
+      chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
+      nFlies=40
+      nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
+        BEGIN {
+          autLen=0
+          sexLen=0
+          autRD=0
+          sexRD=0
+        }
+        {
+          if($3>0) {
+            if(!match($0, /_X/) && !match($0, /_Y/) && !match($0, /_mtDNA/)) {
+              autLen+=$2
+              autRD+=$3
+            }
+            if(match($0, /_X/)) {
+              sexLen+=$2
+              sexRD+=$3
+            }
+          }
+        }
+        END {
+          print "autCov: "autRD/autLen  > "/dev/stderr"
+          print "sexCov: "sexRD/sexLen  > "/dev/stderr"
+          print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
+          propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
+          print "prop Female: " propFemale  > "/dev/stderr"
+          print "nFemales: " propFemale*nFlies  > "/dev/stderr"
+          print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
+          print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
+        }
+        ')
+      echo "number of estimated X-chromosomes" $nXchr
 
-    check_exit_status "Mpileup2SNAPE" $?
+    ### run SNAPE
 
-    gzip -f $output/$sample/${sample}.${prefix}.SNAPE.output.txt
+      ### split the mpileup on chromosome
+      cd $output/$sample
+      awk '{if (last != $1) close(last); print >> $1; last = $1}' $output/$sample/${sample}.${prefix}_mpileup.txt
 
-    python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
-    --input $output/$sample/${sample}.${prefix}.SNAPE.output.txt.gz \
-    --ref ${refOut} \
-    --output $output/$sample/${sample}.${prefix}.SNAPE
+      for chr in ${chrs}; do
+        if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
+          snape-pooled -nchr $((${nflies}*2)) -theta $theta -D $D -priortype $priortype -fold $fold < ${chr} > ${chr}-$sample-SNAPE.txt
+          rm ${chr}
+        else
+          snape-pooled -nchr ${nXchr} -theta $theta -D $D -priortype $priortype -fold $fold < ${chr} > ${chr}-$sample-SNAPE.txt
+          rm ${chr}
+        fi
+      done
 
-    check_exit_status "SNAPE2SYNC" $?
+      cat *-$sample-SNAPE.txt  > ${sample}.SNAPE.output.txt
+      rm *-$sample-SNAPE.txt
 
-    python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-    --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
-    --output $output/$sample/${sample}.${prefix}.SNAPE.complete \
-    --indel $output/$sample/${sample}.indel \
-    --coverage $output/$sample/${sample}.cov \
-    --mincov $min_cov \
-    --maxcov $max_cov \
-    --maxsnape $maxsnape \
-    --SNAPE
+    ### format to SYNC
+      check_exit_status "snape-pooled" $?
 
-    check_exit_status "MaskSYNC_SNAPE_Complete" $?
+      gzip -f $output/$sample/${sample}.${prefix}.SNAPE.output.txt
 
-    mv $output/$sample/${sample}.${prefix}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+      python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
+      --input $output/$sample/${sample}.${prefix}.SNAPE.output.txt.gz \
+      --ref ${refOut} \
+      --output $output/$sample/${sample}.${prefix}.SNAPE
 
-    python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
-    --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
-    --output $output/$sample/${sample}.${prefix}.SNAPE.monomorphic \
-    --indel $output/$sample/${sample}.indel \
-    --coverage $output/$sample/${sample}.cov \
-    --mincov $min_cov \
-    --maxcov $max_cov \
-    --maxsnape $maxsnape \
-    --SNAPE
+      check_exit_status "SNAPE2SYNC" $?
 
-    check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
+      python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+      --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+      --output $output/$sample/${sample}.${prefix}.SNAPE.complete \
+      --indel $output/$sample/${sample}.indel \
+      --coverage $output/$sample/${sample}.cov \
+      --mincov $min_cov \
+      --maxcov $max_cov \
+      --maxsnape $maxsnape \
+      --SNAPE
 
-    mv $output/$sample/${sample}.${prefix}.SNAPE.monomorphic_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+      check_exit_status "MaskSYNC_SNAPE_Complete" $?
 
-    gunzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
-    bgzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync
-    tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+      mv $output/$sample/${sample}.${prefix}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-    gunzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
-    bgzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-    tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+      python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
+      --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+      --output $output/$sample/${sample}.${prefix}.SNAPE.monomorphic \
+      --indel $output/$sample/${sample}.indel \
+      --coverage $output/$sample/${sample}.cov \
+      --mincov $min_cov \
+      --maxcov $max_cov \
+      --maxsnape $maxsnape \
+      --SNAPE
 
-    check_exit_status "tabix" $?
+      check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
-    #gzip $output/$sample/${sample}.mel_mpileup.txt
+      mv $output/$sample/${sample}.${prefix}.SNAPE.monomorphic_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-    echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
-    echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
-    echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
-    echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
-    echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
+      gunzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+      bgzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync
+      tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+
+      gunzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+      bgzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+      tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+
+      check_exit_status "tabix" $?
+
+      #gzip $output/$sample/${sample}.mel_mpileup.txt
+
+      echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
+      echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
+      echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
+      echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
+      echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
 
   done < ${focalFile}
 fi

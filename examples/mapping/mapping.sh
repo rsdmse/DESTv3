@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5095898
-### cat /scratch/aob2x/logs/RunDest.5095898*.err
+### sacct -j 5108308
+### cat /scratch/aob2x/logs/RunDest.5108308*.out
 
 
 module load apptainer/1.3.4
@@ -29,7 +29,7 @@ DE_Bad_Bro_1_2020-07-16 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
---num-flies 200 \
+--num-flies 40 \
 --reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --do_snape 1 \

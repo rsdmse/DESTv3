@@ -4,12 +4,14 @@
 ## Changes to Version 3.0 (Fall 2025)
 More flexibility on the reference genome.
 
+Notes - sex chromosomes in focal file must end in "_X" and "_Y"
+
 rebuild docker on local computer
 ```
 cd ~/Documents/GitHub/DESTv3/mappingPipeline
-#docker buildx create --use --name mybuilder
-docker buildx build --builder mybuilder --platform linux/amd64 -t dest_v3:latest --no-cache -f Dockerfile.3.0.0 .
-docker buildx build --builder mybuilder --platform linux/amd64 -t alanbergland/dest_v3:latest --push -f Dockerfile.3.0.0 .
+#docker buildx create --use --name mybuilder4
+docker buildx build --builder mybuilder4 --platform linux/amd64 -t dest_v3:latest --no-cache -f Dockerfile.3.0.0 .
+docker buildx build --builder mybuilder4 --platform linux/amd64 -t alanbergland/dest_v3:latest --push -f Dockerfile.3.0.0 .
 ```
 
 pull onto Rivanna

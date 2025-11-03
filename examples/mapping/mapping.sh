@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5083551
-### cat /scratch/aob2x/logs/RunDest.5083551*.err
+### sacct -j 5095898
+### cat /scratch/aob2x/logs/RunDest.5095898*.err
 
 
 module load apptainer/1.3.4
@@ -34,4 +34,5 @@ DE_Bad_Bro_1_2020-07-16 \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --do_snape 1 \
 --do_poolsnp 0 \
--prepRef 0
+--do_map 0 \
+--prep_reference 0

@@ -55,10 +55,6 @@ check_exit_status () {
       do_poolsnp=$2
       shift # past argument
       ;;
-      #-dnp|--do_not_prep)
-      #do_prep=0
-      #shift # past argument
-      #;;
       -bq|--base-quality-threshold)
       base_quality_threshold="$2"
       shift # past argument
@@ -162,6 +158,8 @@ check_exit_status () {
   esac
   done
 
+  set -- "${POSITIONAL[@]}"
+
 #######################
 ### What am I doing ###
 #######################
@@ -170,10 +168,67 @@ check_exit_status () {
   echo "Do Pool-SNP: "$do_poolsnp
   echo "Do SNAPE: "$do_snape
 
+  if [ $do_single_end -eq "0"  ]; then
+    read1=$1; shift
+    read2=$1; shift
+    sample=$1; shift
+    output=$1; shift
+  fi
+
+  if [ $do_single_end -eq "1" ]; then
+    read1=$1; shift
+    sample=$1; shift
+    output=$1; shift
+  fi
+
+  echo -e "This is DEST v. ${version} \n Parameters as interpreted + those assumed by default --> \n"
+  echo -e \
+  "pe (0) or se (1)? =" $do_single_end "\n" \
+  "r1 =" $read1 "\n" \
+  "r2 =" $read2 "\n" \
+  "sample name =" $sample "\n" \
+  "output =" $output "\n" \
+  "number of flies =" $nflies "\n" \
+  "cpus =" $threads "\n" \
+  "max cov =" $max_cov "\n" \
+  "min cov =" $min_cov "\n" \
+  "theta =" $theta "\n" \
+  "D =" $D "\n" \
+  "prior =" $priortype "\n" \
+  "folded? =" $fold "\n" \
+  "max snape ="$maxsnape "\n" \
+  "base quality threshold =" $base_quality_threshold "\n" \
+  "illumina quality coding =" $illumina_quality_coding "\n" \
+  "minIndel =" $minIndel "\n" \
+  "Prep Reference Genome (0 = no; 1 = yes) =" $prepRef "\n" \
+  "map reads (0 = no; 1 = yes)=" $do_map "\n" \
+  "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
+  "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
+  "reference genome =" $ref "\n" \
+  "focal chromosome file=" $focalFile "\n" \
+
+  if [ ! -f "$read1" ] && [ $do_single_end -eq "0"  ]; then
+    echo "ERROR: for paired end run"
+    echo "ERROR DETAILS: $read1 does not exist"
+    exit 1
+  fi
+
+  if [ ! -f "$read2" ] && [ $do_single_end -eq "0"  ]; then
+    echo "ERROR: for paired end run"
+    echo "ERROR DETAILS: $read2 does not exist"
+    exit 1
+  fi
+
+  if [ ! -f "$read1" ] && [ $do_single_end -eq "1"  ]; then
+    echo "ERROR: for single end run"
+    echo "ERROR DETAILS: $read1 does not exist"
+    exit 1
+  fi
+
+
 ################################
 ### prepare reference genome ###
 ################################
-
   ### error handling
     if [ $prepRef -eq "1" ] && [ $do_poolsnp -eq "1" ]; then
       echo "Cannot prep ref and run mapping at once"
@@ -209,81 +264,6 @@ check_exit_status () {
       done < ${focalFile}
       exit
     fi
-
-
-#######################
-### What am I doing ###
-#######################
-  if [ $do_single_end -eq "1" ]
-  	then
-  	echo "Processing ---> single end run"
-
-  fi
-
-  if [ $do_single_end -eq "0" ]
-  	then
-  	echo "Processing ---> paired end run"
-  fi
-
-  ### Define reads
-    if [ $do_single_end -eq "0"  ]; then
-      read1=$1; shift
-      read2=$1; shift
-      sample=$1; shift
-      output=$1; shift
-    fi
-
-    if [ $do_single_end -eq "1" ]; then
-      read1=$1; shift
-      sample=$1; shift
-      output=$1; shift
-    fi
-
-  set -- "${POSITIONAL[@]}"
-
-  echo -e "This is DEST v. ${version} \n Parameters as interpreted + those assumed by default --> \n"
-  echo -e \
-  "pe (0) or se (1)? =" $do_single_end "\n" \
-  "r1 =" $read1 "\n" \
-  "r2 =" $read2 "\n" \
-  "sample name =" $sample "\n" \
-  "output =" $output "\n" \
-  "number of flies =" $nflies "\n" \
-  "cpus =" $threads "\n" \
-  "max cov =" $max_cov "\n" \
-  "min cov =" $min_cov "\n" \
-  "theta =" $theta "\n" \
-  "D =" $D "\n" \
-  "prior =" $priortype "\n" \
-  "folded? =" $fold "\n" \
-  "max snape ="$maxsnape "\n" \
-  "base quality threshold =" $base_quality_threshold "\n" \
-  "illumina quality coding =" $illumina_quality_coding "\n" \
-  "minIndel =" $minIndel "\n" \
-  "do Prep =" $do_prep "\n" \
-  "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
-  "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
-  "reference genome =" $ref "\n" \
-  "focal chromosome file=" $focalFile "\n" \
-  "prep ref?=" $prepRef "\n"
-
-  if [ ! -f "$read1" ] && [ $do_single_end -eq "0"  ]; then
-    echo "ERROR: for paired end run"
-    echo "ERROR DETAILS: $read1 does not exist"
-    exit 1
-  fi
-
-  if [ ! -f "$read2" ] && [ $do_single_end -eq "0"  ]; then
-    echo "ERROR: for paired end run"
-    echo "ERROR DETAILS: $read2 does not exist"
-    exit 1
-  fi
-
-  if [ ! -f "$read1" ] && [ $do_single_end -eq "1"  ]; then
-    echo "ERROR: for single end run"
-    echo "ERROR DETAILS: $read1 does not exist"
-    exit 1
-  fi
 
 ######################################
 ### do_map? Process and bam reads? ###

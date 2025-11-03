@@ -500,11 +500,18 @@ check_exit_status () {
       refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
       ### infer sex ratio
-        # output=/scratch/aob2x/dest_v3_output/
-        # sample=DE_Bad_Bro_1_2020-07-16
-        # prefix=sim
-        # chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
-        # nflies=40
+        #output=/scratch/aob2x/dest_v3_output/
+        #sample=DE_Bad_Bro_1_2020-07-16
+        #prefix=mel
+        #chrs="2L 2R 3L 3R 4 mtDNA X"
+        #nflies=40
+
+        #output=/scratch/aob2x/dest_v3_output/
+        #sample=DE_Bad_Bro_1_2020-07-16
+        #prefix=sim
+        #chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
+        #nflies=40
+
         nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
           BEGIN {
             autLen=0
@@ -514,11 +521,11 @@ check_exit_status () {
           }
           {
             if($3>0) {
-              if(!match($0, /_X/) && !match($0, /_Y/) && !match($0, /_mtDNA/)) {
+              if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
                 autLen+=$2
                 autRD+=$3
               }
-              if(match($0, /_X/)) {
+              if(match($0, /X/)) {
                 sexLen+=$2
                 sexRD+=$3
               }

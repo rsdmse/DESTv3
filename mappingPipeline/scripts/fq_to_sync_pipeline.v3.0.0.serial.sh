@@ -544,80 +544,72 @@ check_exit_status () {
           ')
         echo "number of estimated X-chromosomes" $nXchr
 
-      ### split the mpileup on chromosome
+      ### run SNAPE
+
+        ### split the mpileup on chromosome
         cd $output/$sample
-        awk -v prefix=${prefix} -v sample=${sample} '{if (last != $1) close(last); print >> sample"."prefix"."$1; last = sample"."prefix"."$1}' ${output}/${sample}/${sample}.${prefix}_mpileup.txt
+        awk '{if (last != $1) close(last); print >> $1; last = $1}' $output/$sample/${sample}.${prefix}_mpileup.txt
 
-      ### run SNAPE function
-        export nflies theta D priortype fold chr sample output nXchr refOut prefix
-
-        doSNAPE () {
-          chr=$1
-          # chr="sim_2L"
-
+        for chr in ${chrs}; do
           if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
-            nChr=$((${nflies}*2))
+            snape-pooled -nchr $((${nflies}*2)) -theta $theta -D $D -priortype $priortype -fold $fold < ${chr} > ${chr}-$sample-SNAPE.txt
+            rm ${chr}
           else
-            nChr=nXchr
+            snape-pooled -nchr ${nXchr} -theta $theta -D $D -priortype $priortype -fold $fold < ${chr} > ${chr}-$sample-SNAPE.txt
+            rm ${chr}
           fi
+        done
 
-          snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < ${output}/${sample}/${sample}.${prefix}.${chr} > ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.txt
+        cat *-$sample-SNAPE.txt  > ${sample}.SNAPE.output.txt
+        rm *-$sample-SNAPE.txt
 
-          gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.output.txt
+      ### format to SYNC
+        check_exit_status "snape-pooled" $?
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
-          --input ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.output.txt.gz \
-          --ref ${refOut} \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE
+        gzip -f $output/$sample/${sample}.${prefix}.SNAPE.output.txt
 
-          check_exit_status "SNAPE2SYNC" $?
+        python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
+        --input $output/$sample/${sample}.${prefix}.SNAPE.output.txt.gz \
+        --ref ${refOut} \
+        --output $output/$sample/${sample}.${prefix}.SNAPE
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-          --sync   ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.sync.gz \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete \
-          --indel     ${output}/${sample}/${sample}.indel \
-          --coverage  ${output}/${sample}/${sample}.cov \
-          --mincov $min_cov \
-          --maxcov $max_cov \
-          --maxsnape $maxsnape \
-          --SNAPE
+        check_exit_status "SNAPE2SYNC" $?
 
-          check_exit_status "MaskSYNC_SNAPE_Complete" $?
+        python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+        --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+        --output $output/$sample/${sample}.${prefix}.SNAPE.complete \
+        --indel $output/$sample/${sample}.indel \
+        --coverage $output/$sample/${sample}.cov \
+        --mincov $min_cov \
+        --maxcov $max_cov \
+        --maxsnape $maxsnape \
+        --SNAPE
 
-          mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz
+        check_exit_status "MaskSYNC_SNAPE_Complete" $?
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
-          --sync ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic \
-          --indel $output/$sample/${sample}.indel \
-          --coverage $output/$sample/${sample}.cov \
-          --mincov $min_cov \
-          --maxcov $max_cov \
-          --maxsnape $maxsnape \
-          --SNAPE
+        mv $output/$sample/${sample}.${prefix}.SNAPE.complete_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-          check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
+        python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
+        --sync $output/$sample/${sample}.${prefix}.SNAPE.sync.gz \
+        --output $output/$sample/${sample}.${prefix}.SNAPE.monomorphic \
+        --indel $output/$sample/${sample}.indel \
+        --coverage $output/$sample/${sample}.cov \
+        --mincov $min_cov \
+        --maxcov $max_cov \
+        --maxsnape $maxsnape \
+        --SNAPE
 
-          mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
+        check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
-          gunzip ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz
-          gunzip ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
+        mv $output/$sample/${sample}.${prefix}.SNAPE.monomorphic_masked.sync.gz $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-        }
-        export -f doSNAPE
+        gunzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+        bgzip $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync
+        tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-      ### figure out parallel call
-        parallel -j ${threads} doSNAPE ::: $( cat /scratch/aob2x/tmpRef/focalFile.csv | head -n1 | cut -f2 -d',' )
-
-      ### collect
-        cat ${output}/${sample}/${sample}.${prefix}.*.SNAPE.complete.masked.sync.gz > ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-        cat ${output}/${sample}/${sample}.${prefix}.*.SNAPE.monomorphic.masked.sync.gz > ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-
-        bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
-
-        bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+        gunzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+        bgzip $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+        tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
         check_exit_status "tabix" $?
 

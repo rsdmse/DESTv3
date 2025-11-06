@@ -440,14 +440,14 @@ check_exit_status () {
 ### do pileup ###
 #################
 
-  #output=/scratch/aob2x/dest_v3_output/
-  #sample=DE_Bad_Bro_1_2020-07-16
-  #prefix=sim
-  #chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
-  #nflies=40
-  #ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-  #focalfile=/scratch/aob2x/tmpRef/focalFile.csv
-  #base_quality_threshold=25
+  output=/scratch/aob2x/dest_v3_output/
+  sample=DE_Bad_Bro_1_2020-07-16
+  prefix=sim
+  chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
+  nflies=40
+  ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+  focalfile=/scratch/aob2x/tmpRef/focalFile.csv
+  base_quality_threshold=25
 
   if [ $do_pileup -eq "1" ]; then
     echo "Do Pileup"
@@ -464,11 +464,13 @@ check_exit_status () {
        -B \
        -Q ${base_quality_threshold} \
        -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
+
+       check_exit_status "samtools" $?
     }
     export -f doPILEUP_function
-    export output sample sample base_quality_threshold ref
+    export output sample base_quality_threshold ref
 
-    parallel -j ${threads} doPILEUP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j 1 doPILEUP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
   fi

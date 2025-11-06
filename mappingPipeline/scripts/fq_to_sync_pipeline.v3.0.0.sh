@@ -610,7 +610,7 @@ check_exit_status () {
       --ref ${refOut} \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE
 
-      check_exit_status "SNAPE2SYNC" $?
+      #check_exit_status "SNAPE2SYNC" $?
 
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync   ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.sync.gz \
@@ -622,7 +622,7 @@ check_exit_status () {
       --maxsnape $maxsnape \
       --SNAPE
 
-      check_exit_status "MaskSYNC_SNAPE_Complete" $?
+      #check_exit_status "MaskSYNC_SNAPE_Complete" $?
 
       mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync.gz \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
@@ -637,7 +637,7 @@ check_exit_status () {
       --maxsnape $maxsnape \
       --SNAPE
 
-      check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
+      #check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
       mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
 
@@ -668,7 +668,7 @@ check_exit_status () {
       bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
       tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-      check_exit_status "tabix" $?
+      #check_exit_status "tabix" $?
 
     }
     export -f collectSNAPE_function

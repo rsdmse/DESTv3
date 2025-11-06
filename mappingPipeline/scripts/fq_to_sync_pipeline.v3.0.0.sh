@@ -154,7 +154,7 @@ check_exit_status () {
       shift # past value
       ;;
       -dopileup|--do_pileup)
-      do_map=$2
+      do_pileup=$2
       shift # past argument
       shift # past value
       ;;
@@ -209,6 +209,7 @@ check_exit_status () {
   "minIndel =" $minIndel "\n" \
   "Prep Reference Genome (0 = no; 1 = yes) =" $prepRef "\n" \
   "map reads (0 = no; 1 = yes)=" $do_map "\n" \
+  "do pileup? (0 = no; 1 = yes)=" $do_pileup "\n" \
   "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
   "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
   "reference genome =" $ref "\n" \
@@ -449,6 +450,7 @@ check_exit_status () {
   #base_quality_threshold=25
 
   if [ $do_pileup -eq "1"]; then
+    echo "Doing Pileup"
     doPILEUP_function () {
 
        prefix=$( echo $1 | cut -f1 -d',')

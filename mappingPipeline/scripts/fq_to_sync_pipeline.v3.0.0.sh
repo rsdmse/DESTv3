@@ -476,10 +476,11 @@ check_exit_status () {
     export -f doPILEUP_function
     export output sample base_quality_threshold ref
     echo "catting about"
-    cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}'
+    cat $focalFile
+    cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}'
 
     echo "trying to run parallel"
-    parallel -j 1 doPILEUP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j 1 doPILEUP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
   fi

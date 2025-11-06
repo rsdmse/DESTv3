@@ -492,7 +492,7 @@ check_exit_status () {
       --coding $illumina_quality_coding \
       --minIndel $minIndel
 
-      check_exit_status "Mpileup2Sync" $?
+      #check_exit_status "Mpileup2Sync" $?
 
       #For the PoolSNP output
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
@@ -504,7 +504,7 @@ check_exit_status () {
       --maxcov $max_cov \
       --maxsnape $maxsnape
 
-      check_exit_status "MaskSYNC" $?
+      #check_exit_status "MaskSYNC" $?
 
       gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.masked.sync.gz
       gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.sync.gz

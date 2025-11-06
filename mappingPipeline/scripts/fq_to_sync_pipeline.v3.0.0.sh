@@ -458,7 +458,7 @@ check_exit_status () {
        samtools mpileup -  \
        -B \
        -Q ${base_quality_threshold} \
-       -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
+       -f ${refOut} | head -n 1000 > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
 
        check_exit_status "samtools" $?
     }

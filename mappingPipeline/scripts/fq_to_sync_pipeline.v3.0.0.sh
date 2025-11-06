@@ -439,19 +439,8 @@ check_exit_status () {
 #################
 ### do pileup ###
 #################
-
-  # output=/scratch/aob2x/dest_v3_output/
-  # sample=DE_Bad_Bro_1_2020-07-16
-  # prefix=sim
-  # chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
-  # nflies=40
-  # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-  # focalfile=/scratch/aob2x/tmpRef/focalFile.csv
-  # base_quality_threshold=25
-
   if [ $do_pileup -eq "1" ]; then
     echo "Do Pileup"
-
 
     doPILEUP_function () {
        prefix=$( echo $1 | cut -f1 -d',')
@@ -459,28 +448,25 @@ check_exit_status () {
        # prefix=sim; chr=sim_2L
        refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-       #echo ${1}
-       echo $1
-       echo $prefix
-       echo $chr
-       echo $sample
-       echo ${refOut}
-       # samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
-       # samtools mpileup -  \
-       # -B \
-       # -Q ${base_quality_threshold} \
-       # -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
+       echo "making pileup for " ${1}
+       #echo $1
+       #echo $prefix
+       #echo $chr
+       #echo $sample
+       #echo ${refOut}
+       samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
+       samtools mpileup -  \
+       -B \
+       -Q ${base_quality_threshold} \
+       -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
 
        check_exit_status "samtools" $?
     }
     export -f doPILEUP_function
     export output sample base_quality_threshold ref
-    echo "catting about"
-    cat $focalFile
-    cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}'
 
-    echo "trying to run parallel"
-    parallel -j 1 doPILEUP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    echo "run doPILEUP_function"
+    parallel -j ${threads} doPILEUP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
   fi
@@ -489,6 +475,9 @@ check_exit_status () {
 ### do pool_snp ###
 ###################
   if [ $do_poolsnp -eq "1" ]; then
+
+    ### run it
+    echo "Do PoolSNP"
     doPOOLSNP_function () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
@@ -523,10 +512,11 @@ check_exit_status () {
     }
     export -f doPOOLSNP_function
     export output sample sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding
-    parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect
+    echo "collecting PoolSNP"
     collectPOOLSNP_function () {
 
         cat ${output}/${sample}/${sample}.${prefix}.*_chr.sync |
@@ -541,11 +531,10 @@ check_exit_status () {
 
     }
     export -f collectPOOLSNP_function
-    parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalfile | cut -f1 -d',' )
+    parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalFile | cut -f1 -d',' )
     check_exit_status "parallel" $?
 
-    #rm $output/$sample/${sample}.${prefix}_mpileup.txt
-
+    ### send it
     echo "Read 1: $read1" >> $output/$sample/${sample}.parameters.txt
     echo "Read 2: $read2" >> $output/$sample/${sample}.parameters.txt
     echo "Sample name: $sample" >> $output/$sample/${sample}.parameters.txt
@@ -563,144 +552,135 @@ check_exit_status () {
 ### do SNAPE ###
 ################
   if [ $do_snape -eq "1" ]; then
-    while read p; do
-      prefix=$( echo $p | cut -f1 -d',')
-      echo $prefix
-      chrs=$( echo $p | cut -f2 -d',')
-      echo $chrs
+
+    ### Run SNAPE
+    echo "Do SNAPE"
+    doSNAPE_function () {
+      prefix=$( echo $1 | cut -f1 -d',')
+      chr=$( echo $1 | cut -f2 -d',')
+      # prefix=sim; chr=sim_2L
       refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-      ### infer sex ratio
-        #output=/scratch/aob2x/dest_v3_output/
-        #sample=DE_Bad_Bro_1_2020-07-16
-        #prefix=mel
-        #chrs="2L 2R 3L 3R 4 mtDNA X"
-        #nflies=40
-
-        #output=/scratch/aob2x/dest_v3_output/
-        #sample=DE_Bad_Bro_1_2020-07-16
-        #prefix=sim
-        #chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
-        #nflies=40
-
-        nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
-          BEGIN {
-            autLen=0
-            sexLen=0
-            autRD=0
-            sexRD=0
-          }
-          {
-            if($3>0) {
-              if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
-                autLen+=$2
-                autRD+=$3
+      nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
+              BEGIN {
+                autLen=0
+                sexLen=0
+                autRD=0
+                sexRD=0
               }
-              if(match($0, /X/)) {
-                sexLen+=$2
-                sexRD+=$3
+              {
+                if($3>0) {
+                  if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
+                    autLen+=$2
+                    autRD+=$3
+                  }
+                  if(match($0, /X/)) {
+                    sexLen+=$2
+                    sexRD+=$3
+                  }
+                }
               }
-            }
-          }
-          END {
-            print "autCov: "autRD/autLen  > "/dev/stderr"
-            print "sexCov: "sexRD/sexLen  > "/dev/stderr"
-            print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
-            propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
-            print "prop Female: " propFemale  > "/dev/stderr"
-            print "nFemales: " propFemale*nFlies  > "/dev/stderr"
-            print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
-            print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
-          }
-          ')
-        echo "number of estimated X-chromosomes" $nXchr
+              END {
+                print "autCov: "autRD/autLen  > "/dev/stderr"
+                print "sexCov: "sexRD/sexLen  > "/dev/stderr"
+                print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
+                propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
+                print "prop Female: " propFemale  > "/dev/stderr"
+                print "nFemales: " propFemale*nFlies  > "/dev/stderr"
+                print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
+                print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
+              }
+              ')
+      echo "number of estimated X-chromosomes" $nXchr
 
-      ### split the mpileup on chromosome
-        #cd $output/$sample
-        #awk -v prefix=${prefix} -v sample=${sample} '{if (last != $1) close(last); print >> sample"."prefix"."$1; last = sample"."prefix"."$1}' ${output}/${sample}/${sample}.${prefix}.mpileup.txt
+      if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
+        nChr=$((${nflies}*2))
+      else
+        nChr=nXchr
+      fi
 
-      ### run SNAPE function
-        export nflies theta D priortype fold chr sample output nXchr refOut prefix
+      snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < \
+      ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
+      ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
-        doSNAPE_function () {
-          chr=$1
-          # chr="sim_2L"
+      gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.output.txt
 
-          if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
-            nChr=$((${nflies}*2))
-          else
-            nChr=nXchr
-          fi
+      python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
+      --input ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.output.txt.gz \
+      --ref ${refOut} \
+      --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE
 
-          snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.txt
+      check_exit_status "SNAPE2SYNC" $?
 
-          gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.output.txt
+      python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+      --sync   ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.sync.gz \
+      --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete \
+      --indel     ${output}/${sample}/${sample}.indel \
+      --coverage  ${output}/${sample}/${sample}.cov \
+      --mincov $min_cov \
+      --maxcov $max_cov \
+      --maxsnape $maxsnape \
+      --SNAPE
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
-          --input ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.output.txt.gz \
-          --ref ${refOut} \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE
+      check_exit_status "MaskSYNC_SNAPE_Complete" $?
 
-          check_exit_status "SNAPE2SYNC" $?
+      mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync.gz \
+      ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-          --sync   ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.sync.gz \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete \
-          --indel     ${output}/${sample}/${sample}.indel \
-          --coverage  ${output}/${sample}/${sample}.cov \
-          --mincov $min_cov \
-          --maxcov $max_cov \
-          --maxsnape $maxsnape \
-          --SNAPE
+      python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
+      --sync ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz \
+      --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic \
+      --indel $output/$sample/${sample}.indel \
+      --coverage $output/$sample/${sample}.cov \
+      --mincov $min_cov \
+      --maxcov $max_cov \
+      --maxsnape $maxsnape \
+      --SNAPE
 
-          check_exit_status "MaskSYNC_SNAPE_Complete" $?
+      check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
-          mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz
+      mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
 
-          python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
-          --sync ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz \
-          --output ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic \
-          --indel $output/$sample/${sample}.indel \
-          --coverage $output/$sample/${sample}.cov \
-          --mincov $min_cov \
-          --maxcov $max_cov \
-          --maxsnape $maxsnape \
-          --SNAPE
+      gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+      gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
 
-          check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
+    }
+    export -f doSNAPE_function
+    export nflies theta D priortype fold chr sample output nXchr refOut prefix
+    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    check_exit_status "parallel" $?
 
-          mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
+    ### collect
+    echo "Collect SNAPE"
+    collectSNAPE_function () {
 
-          gunzip ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.complete.masked.sync.gz
-          gunzip ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
+      cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync > \
+      ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
+      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync
 
-        }
-        export -f doSNAPE_function
+      cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync > \
+      ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync
 
-      ### figure out parallel call
-        parallel -j ${threads} doSNAPE_function ::: $( cat /scratch/aob2x/tmpRef/focalFile.csv | head -n1 | cut -f2 -d',' )
+      bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
+      tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-      ### collect
-        cat ${output}/${sample}/${sample}.${prefix}.*.SNAPE.complete.masked.sync.gz > ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-        cat ${output}/${sample}/${sample}.${prefix}.*.SNAPE.monomorphic.masked.sync.gz > ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+      bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+      tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
-        bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+      check_exit_status "tabix" $?
 
-        bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+    }
+    export -f collectSNAPE_function
+    parallel -j ${threads} collectSNAPE_function ::: $( cat $focalFile | cut -f1 -d',' )
+    check_exit_status "parallel" $?
 
-        check_exit_status "tabix" $?
-
-        #gzip $output/$sample/${sample}.mel_mpileup.txt
-
-        echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
-        echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
-        echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
-        echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
-        echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
-
-    done < ${focalFile}
+    ### send it
+    echo "Maxsnape $maxsnape" >> $output/$sample/${sample}.parameters.txt
+    echo "theta:  $theta" >> $output/$sample/${sample}.parameters.txt
+    echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
+    echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
+    echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
   fi
 
 ###########

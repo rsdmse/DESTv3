@@ -12,12 +12,14 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5293872
-### cat /scratch/aob2x/logs/RunDest.5293872*.err
+### sacct -j 5316539
+### cat /scratch/aob2x/logs/RunDest.5316539*.out
+# ijob -A berglandlab -c20 -p standard --mem=64G
 
 
 module load apptainer/1.3.4
 #apptainer build -F /scratch/aob2x/dest_v3.sif docker://alanbergland/dest_v3:latest
+
 
 singularity run \
 /scratch/aob2x/dest_v3.sif  \
@@ -25,7 +27,7 @@ singularity run \
 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
 DE_Bad_Bro_1_2020-07-16 \
 /scratch/aob2x/dest_v3_output/ \
---threads 20 \
+--threads 1 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
@@ -40,4 +42,23 @@ DE_Bad_Bro_1_2020-07-16 \
 
 ### foo
 
-singularity shell /scratch/aob2x/dest_v3.sif
+# singularity shell /scratch/aob2x/dest_v3.sif
+chmod +x ~/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh
+
+~/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh \
+/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
+/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
+DE_Bad_Bro_1_2020-07-16 \
+/scratch/aob2x/dest_v3_output/ \
+--threads 1 \
+--max-cov 0.95 \
+--min-cov 4 \
+--base-quality-threshold 25 \
+--num-flies 40 \
+--reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
+--focal_file /scratch/aob2x/tmpRef/focalFile.csv \
+--do_snape 0 \
+--do_poolsnp 0 \
+--do_map 0 \
+--do_pileup 1 \
+--prep_reference 0

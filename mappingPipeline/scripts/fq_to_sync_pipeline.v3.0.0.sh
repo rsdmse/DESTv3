@@ -440,17 +440,24 @@ check_exit_status () {
 ### do pileup ###
 #################
 
-  output=/scratch/aob2x/dest_v3_output/
-  sample=DE_Bad_Bro_1_2020-07-16
-  prefix=sim
-  chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
-  nflies=40
-  ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-  focalfile=/scratch/aob2x/tmpRef/focalFile.csv
-  base_quality_threshold=25
+  # output=/scratch/aob2x/dest_v3_output/
+  # sample=DE_Bad_Bro_1_2020-07-16
+  # prefix=sim
+  # chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
+  # nflies=40
+  # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+  # focalfile=/scratch/aob2x/tmpRef/focalFile.csv
+  # base_quality_threshold=25
 
   if [ $do_pileup -eq "1" ]; then
     echo "Do Pileup"
+
+    doTEST () {
+      echo "foo"
+    }
+    export -f doTEST
+    doTEST
+
     doPILEUP_function () {
        prefix=$( echo $1 | cut -f1 -d',')
        chr=$( echo $1 | cut -f2 -d',')

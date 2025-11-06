@@ -511,7 +511,7 @@ check_exit_status () {
 
     }
     export -f doPOOLSNP_function
-    export output sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding
+    export output sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding minIndel
     parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
@@ -646,7 +646,7 @@ check_exit_status () {
 
     }
     export -f doSNAPE_function
-    export nflies theta D priortype fold chr sample output nXchr refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold
+    export nflies theta D priortype fold chr sample output nXchr refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel
 
     parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?

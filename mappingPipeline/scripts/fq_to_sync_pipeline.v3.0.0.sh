@@ -30,12 +30,14 @@ check_exit_status () {
   base_quality_threshold=25
   illumina_quality_coding=1.8
   minIndel=5
+  prepRef=1
   do_map=1
+  do_pileup=1
   do_snape=1
   do_poolsnp=1
   ref_genome="path_to_ref_fasta"
   focalFile="path_to_focalFile_csv"
-  prepRef=1
+
 
 ##################################
 ### Parse positional arguments ###
@@ -147,6 +149,11 @@ check_exit_status () {
       shift # past value
       ;;
       -domap|--do_map)
+      do_map=$2
+      shift # past argument
+      shift # past value
+      ;;
+      -dopileup|--do_pileup)
       do_map=$2
       shift # past argument
       shift # past value
@@ -266,7 +273,7 @@ check_exit_status () {
     fi
 
 ######################################
-### do_map? Process and bam reads? ###
+### do_map? Process and map reads? ###
 ######################################
   if [ $do_map -eq "1" ]; then
 
@@ -421,10 +428,6 @@ check_exit_status () {
            mv $output/$sample/${sample}.${prefix}.sort.bam $output/$sample/${sample}.${prefix}.bam
            samtools index $output/$sample/${sample}.${prefix}.bam
 
-           samtools mpileup $output/$sample/${sample}.${prefix}.bam \
-           -B \
-           -Q ${base_quality_threshold} \
-           -f ${refOut} > $output/$sample/${sample}.${prefix}_mpileup.txt
       done < ${focalFile}
 
       mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
@@ -432,60 +435,111 @@ check_exit_status () {
       samtools index $output/$sample/${sample}.original.bam
   fi
 
+#################
+### do pileup ###
+#################
+
+  #output=/scratch/aob2x/dest_v3_output/
+  #sample=DE_Bad_Bro_1_2020-07-16
+  #prefix=sim
+  #chrs="sim_2L sim_2R sim_3L sim_3R sim_4 sim_mtDNA sim_X"
+  #nflies=40
+  #ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+  #focalfile=/scratch/aob2x/tmpRef/focalFile.csv
+  #base_quality_threshold=25
+
+  if [ $do_pileup -eq "1"]; then
+    doPILEUP_function () {
+
+       prefix=$( echo $1 | cut -f1 -d',')
+       chr=$( echo $1 | cut -f2 -d',')
+       # prefix=sim; chr=sim_2L
+       refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+
+       #echo ${1}
+       echo ${refOut}
+       samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
+       samtools mpileup -  \
+       -B \
+       -Q ${base_quality_threshold} \
+       -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
+    }
+    export -f doPILEUP_function
+    export output sample sample base_quality_threshold ref
+
+    parallel -j ${threads} doPILEUP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+  fi
+
 ###################
 ### do pool_snp ###
 ###################
   if [ $do_poolsnp -eq "1" ]; then
-      while read p; do
-        prefix=$( echo $p | cut -f1 -d',')
-        echo $prefix
-        chrs=$( echo $p | cut -f2 -d',')
-        echo $chrs
-        refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+    doPOOLSNP_function () {
+      prefix=$( echo $1 | cut -f1 -d',')
+      chr=$( echo $1 | cut -f2 -d',')
+      # prefix=sim; chr=sim_2L
+      refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
-        python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
-        --mpileup $output/$sample/${sample}.${prefix}_mpileup.txt \
-        --ref ${refOut}.ref \
-        --output $output/$sample/${sample}.${prefix} \
-        --base-quality-threshold $base_quality_threshold \
-        --coding $illumina_quality_coding \
-        --minIndel $minIndel
+      python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
+      --mpileup $output/$sample/${sample}.${prefix}.${chr}.mpileup.txt \
+      --ref ${refOut}.ref \
+      --output $output/$sample/${sample}.${prefix}.${chr}_chr \
+      --base-quality-threshold $base_quality_threshold \
+      --coding $illumina_quality_coding \
+      --minIndel $minIndel
 
-        check_exit_status "Mpileup2Sync" $?
+      check_exit_status "Mpileup2Sync" $?
 
-        #For the PoolSNP output
-        python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-        --sync $output/$sample/${sample}.${prefix}.sync.gz \
-        --output $output/$sample/${sample}.${prefix} \
-        --indel $output/$sample/${sample}.${prefix}.indel \
-        --coverage $output/$sample/${sample}.${prefix}.cov \
-        --mincov $min_cov \
-        --maxcov $max_cov \
-        --maxsnape $maxsnape
+      #For the PoolSNP output
+      python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
+      --sync $output/$sample/${sample}.${prefix}.${chr}_chr.sync.gz \
+      --output $output/$sample/${sample}.${prefix}.${chr}_chr \
+      --indel $output/$sample/${sample}.${prefix}.indel \
+      --coverage $output/$sample/${sample}.${prefix}.cov \
+      --mincov $min_cov \
+      --maxcov $max_cov \
+      --maxsnape $maxsnape
 
-        check_exit_status "MaskSYNC" $?
+      check_exit_status "MaskSYNC" $?
 
-        mv $output/$sample/${sample}.${prefix}_masked.sync.gz $output/$sample/${sample}.${prefix}.masked.sync.gz
-        gunzip $output/$sample/${sample}.${prefix}.masked.sync.gz
-        bgzip $output/$sample/${sample}.${prefix}.masked.sync
-        tabix -s 1 -b 2 -e 2 $output/$sample/${sample}.${prefix}.masked.sync.gz
+      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.masked.sync.gz
+      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.sync.gz
 
-        check_exit_status "tabix" $?
+    }
+    export -f doPOOLSNP_function
+    export output sample sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding
+    parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
 
-        #rm $output/$sample/${sample}.${prefix}_mpileup.txt
+    ### collect
+    collectPOOLSNP_function () {
 
-        echo "Read 1: $read1" >> $output/$sample/${sample}.parameters.txt
-        echo "Read 2: $read2" >> $output/$sample/${sample}.parameters.txt
-        echo "Sample name: $sample" >> $output/$sample/${sample}.parameters.txt
-        echo "Output directory: $output" >> $output/$sample/${sample}.parameters.txt
-        echo "Number of cores used: $threads" >> $output/$sample/${sample}.parameters.txt
-        echo "Max cov: $max_cov" >> $output/$sample/${sample}.parameters.txt
-        echo "Min cov $min_cov" >> $output/$sample/${sample}.parameters.txt
-        echo "base-quality-threshold $base_quality_threshold" >> $output/$sample/${sample}.parameters.txt
-        echo "illumina-quality-coding $illumina_quality_coding" >> $output/$sample/${sample}.parameters.txt
-        echo "min-indel $minIndel" >> $output/$sample/${sample}.parameters.txt
-        echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
-      done < ${focalFile}
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.sync |
+        bgzip -c > ${output}/${sample}/${sample}.${prefix}.sync.gz
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.sync
+        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
+
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.masked.sync |
+        bgzip -c > ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.masked.sync
+        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
+
+    }
+    export -f collectPOOLSNP_function
+    parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalfile | cut -f1 -d',' )
+
+    #rm $output/$sample/${sample}.${prefix}_mpileup.txt
+
+    echo "Read 1: $read1" >> $output/$sample/${sample}.parameters.txt
+    echo "Read 2: $read2" >> $output/$sample/${sample}.parameters.txt
+    echo "Sample name: $sample" >> $output/$sample/${sample}.parameters.txt
+    echo "Output directory: $output" >> $output/$sample/${sample}.parameters.txt
+    echo "Number of cores used: $threads" >> $output/$sample/${sample}.parameters.txt
+    echo "Max cov: $max_cov" >> $output/$sample/${sample}.parameters.txt
+    echo "Min cov $min_cov" >> $output/$sample/${sample}.parameters.txt
+    echo "base-quality-threshold $base_quality_threshold" >> $output/$sample/${sample}.parameters.txt
+    echo "illumina-quality-coding $illumina_quality_coding" >> $output/$sample/${sample}.parameters.txt
+    echo "min-indel $minIndel" >> $output/$sample/${sample}.parameters.txt
+    echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
   fi
 
 ################
@@ -551,7 +605,7 @@ check_exit_status () {
       ### run SNAPE function
         export nflies theta D priortype fold chr sample output nXchr refOut prefix
 
-        doSNAPE () {
+        doSNAPE_function () {
           chr=$1
           # chr="sim_2L"
 
@@ -604,10 +658,10 @@ check_exit_status () {
           gunzip ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
 
         }
-        export -f doSNAPE
+        export -f doSNAPE_function
 
       ### figure out parallel call
-        parallel -j ${threads} doSNAPE ::: $( cat /scratch/aob2x/tmpRef/focalFile.csv | head -n1 | cut -f2 -d',' )
+        parallel -j ${threads} doSNAPE_function ::: $( cat /scratch/aob2x/tmpRef/focalFile.csv | head -n1 | cut -f2 -d',' )
 
       ### collect
         cat ${output}/${sample}/${sample}.${prefix}.*.SNAPE.complete.masked.sync.gz > ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync

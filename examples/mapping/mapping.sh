@@ -12,7 +12,7 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5117287
+### sacct -j 5202633
 ### cat /scratch/aob2x/logs/RunDest.5117287*.out
 
 
@@ -35,4 +35,5 @@ DE_Bad_Bro_1_2020-07-16 \
 --do_snape 1 \
 --do_poolsnp 0 \
 --do_map 0 \
+--do_pileup 1 \
 --prep_reference 0

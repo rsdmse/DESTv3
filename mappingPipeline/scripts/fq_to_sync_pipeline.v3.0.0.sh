@@ -452,11 +452,6 @@ check_exit_status () {
   if [ $do_pileup -eq "1" ]; then
     echo "Do Pileup"
 
-    doTEST () {
-      echo "foo"
-    }
-    export -f doTEST
-    doTEST
 
     doPILEUP_function () {
        prefix=$( echo $1 | cut -f1 -d',')
@@ -465,12 +460,16 @@ check_exit_status () {
        refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
        #echo ${1}
+       echo $1
+       echo $prefix
+       echo $chr
+       echo $sample
        echo ${refOut}
-       samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
-       samtools mpileup -  \
-       -B \
-       -Q ${base_quality_threshold} \
-       -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
+       # samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
+       # samtools mpileup -  \
+       # -B \
+       # -Q ${base_quality_threshold} \
+       # -f ${refOut}  > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
 
        check_exit_status "samtools" $?
     }

@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5258473
-### cat /scratch/aob2x/logs/RunDest.5258473*.out
+### sacct -j 5259467
+### cat /scratch/aob2x/logs/RunDest.5259467*.out
 
 
 module load apptainer/1.3.4

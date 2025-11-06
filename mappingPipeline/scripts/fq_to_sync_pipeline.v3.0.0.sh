@@ -460,7 +460,7 @@ check_exit_status () {
        -Q ${base_quality_threshold} \
        -f ${refOut} | head -n 1000 > ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt
 
-       check_exit_status "samtools" $?
+       #check_exit_status "samtools" $?
     }
     export -f doPILEUP_function
     export output sample base_quality_threshold ref

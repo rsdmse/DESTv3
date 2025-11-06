@@ -449,7 +449,7 @@ check_exit_status () {
   #focalfile=/scratch/aob2x/tmpRef/focalFile.csv
   #base_quality_threshold=25
 
-  if [ $do_pileup -eq "1"]; then
+  if [ $do_pileup -eq "1" ]; then
     echo "Do Pileup"
     doPILEUP_function () {
        prefix=$( echo $1 | cut -f1 -d',')

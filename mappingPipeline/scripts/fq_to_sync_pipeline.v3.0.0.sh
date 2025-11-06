@@ -208,10 +208,10 @@ check_exit_status () {
   "illumina quality coding =" $illumina_quality_coding "\n" \
   "minIndel =" $minIndel "\n" \
   "Prep Reference Genome (0 = no; 1 = yes) =" $prepRef "\n" \
-  "map reads (0 = no; 1 = yes)=" $do_map "\n" \
-  "do pileup? (0 = no; 1 = yes)=" $do_pileup "\n" \
-  "do snape? (0 = no; 1 = yes) -->" $do_snape "\n" \
-  "do poolsnp? (0 = no; 1 = yes) -->" $do_poolsnp "\n" \
+  "map reads (0 = no; 1 = yes) =" $do_map "\n" \
+  "do pileup? (0 = no; 1 = yes) =" $do_pileup "\n" \
+  "do snape? (0 = no; 1 = yes) =" $do_snape "\n" \
+  "do poolsnp? (0 = no; 1 = yes) =" $do_poolsnp "\n" \
   "reference genome =" $ref "\n" \
   "focal chromosome file=" $focalFile "\n" \
 
@@ -277,7 +277,7 @@ check_exit_status () {
 ### do_map? Process and map reads? ###
 ######################################
   if [ $do_map -eq "1" ]; then
-
+    echo "Do Map"
     ### mkdirs
       if [ ! -d $output/$sample/ ]; then
         mkdir -p $output/$sample/
@@ -450,9 +450,8 @@ check_exit_status () {
   #base_quality_threshold=25
 
   if [ $do_pileup -eq "1"]; then
-    echo "Doing Pileup"
+    echo "Do Pileup"
     doPILEUP_function () {
-
        prefix=$( echo $1 | cut -f1 -d',')
        chr=$( echo $1 | cut -f2 -d',')
        # prefix=sim; chr=sim_2L
@@ -470,6 +469,8 @@ check_exit_status () {
     export output sample sample base_quality_threshold ref
 
     parallel -j ${threads} doPILEUP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    check_exit_status "parallel" $?
+
   fi
 
 ###################
@@ -511,6 +512,7 @@ check_exit_status () {
     export -f doPOOLSNP_function
     export output sample sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding
     parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalfile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    check_exit_status "parallel" $?
 
     ### collect
     collectPOOLSNP_function () {
@@ -528,6 +530,7 @@ check_exit_status () {
     }
     export -f collectPOOLSNP_function
     parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalfile | cut -f1 -d',' )
+    check_exit_status "parallel" $?
 
     #rm $output/$sample/${sample}.${prefix}_mpileup.txt
 
@@ -601,8 +604,8 @@ check_exit_status () {
         echo "number of estimated X-chromosomes" $nXchr
 
       ### split the mpileup on chromosome
-        cd $output/$sample
-        awk -v prefix=${prefix} -v sample=${sample} '{if (last != $1) close(last); print >> sample"."prefix"."$1; last = sample"."prefix"."$1}' ${output}/${sample}/${sample}.${prefix}_mpileup.txt
+        #cd $output/$sample
+        #awk -v prefix=${prefix} -v sample=${sample} '{if (last != $1) close(last); print >> sample"."prefix"."$1; last = sample"."prefix"."$1}' ${output}/${sample}/${sample}.${prefix}.mpileup.txt
 
       ### run SNAPE function
         export nflies theta D priortype fold chr sample output nXchr refOut prefix
@@ -617,7 +620,7 @@ check_exit_status () {
             nChr=nXchr
           fi
 
-          snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < ${output}/${sample}/${sample}.${prefix}.${chr} > ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.txt
+          snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.txt
 
           gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.output.txt
 

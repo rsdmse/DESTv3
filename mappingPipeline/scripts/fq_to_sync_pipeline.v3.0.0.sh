@@ -465,7 +465,7 @@ check_exit_status () {
        picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
        if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
        refStem=$( echo $ref | awk -F'/' '{print $NF}' )
-       refOut=${picklesDir}/${prefix}_${chrs}.$refStem
+       refOut=${picklesDir}/${prefix}_${chr}.$refStem
 
        echo "making pileup for " ${1}
        samtools view -b ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
@@ -500,7 +500,7 @@ check_exit_status () {
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
-      refOut=${picklesDir}/${prefix}_${chrs}.$refStem
+      refOut=${picklesDir}/${prefix}_${chr}.$refStem
 
       echo ${prefix}" "${refOut}
       python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
@@ -581,7 +581,7 @@ check_exit_status () {
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
-      refOut=${picklesDir}/${prefix}_${chrs}.$refStem
+      refOut=${picklesDir}/${prefix}_${chr}.$refStem
 
       nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
               BEGIN {

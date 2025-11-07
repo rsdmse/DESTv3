@@ -681,12 +681,13 @@ check_exit_status () {
     export -f doSNAPE_function
     export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
-    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    # parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect
     echo "Collect SNAPE"
     collectSNAPE_function () {
+      prefix=$( echo $1 | cut -f1 -d',')
 
       cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync > \
       ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
@@ -696,11 +697,11 @@ check_exit_status () {
       ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
       rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync
 
-      bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-      tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+      bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
+      tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
 
-      bgzip ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-      tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+      bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+      tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
 
       #check_exit_status "tabix" $?
 

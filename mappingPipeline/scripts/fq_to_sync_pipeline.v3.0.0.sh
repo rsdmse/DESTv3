@@ -498,7 +498,6 @@ check_exit_status () {
       # prefix=sim; chr=sim_2L
 
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
-      if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
 
@@ -580,7 +579,6 @@ check_exit_status () {
       chr=$( echo $1 | cut -f2 -d',')
       # prefix=sim; chr=sim_2L
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
-      if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
       chrs=$( cat $focalFile | grep "$prefix" | cut -f2 -d',' )
@@ -627,11 +625,19 @@ check_exit_status () {
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
+      # output=/scratch/aob2x/dest_v3_output/
+      # sample=DE_Bad_Bro_1_2020-07-16
+      # prefix=mel
+      # chr=2L
+      # max_cov=0.95
+      # min_cov=4
+      # maxsnape=.9
+      # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
       gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
       python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
       --input ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt.gz \
-      --ref ${refOut} \
+      --ref ${refOut}.ref \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE
 
       #check_exit_status "SNAPE2SYNC" $?
@@ -670,7 +676,7 @@ check_exit_status () {
 
     }
     export -f doSNAPE_function
-    export nflies theta D priortype fold chr sample output nXchr refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
+    export nflies theta D priortype fold chr sample output refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
     parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?

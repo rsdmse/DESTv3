@@ -653,10 +653,10 @@ check_exit_status () {
       #max_cov=.95
       #maxsnape=.9
 
-      #mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync \
-      #${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync
-#
-      #gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+      mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync.gz \
+      ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+
+      gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
       cat ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync | awk '{printf$0; if(NF==4) print "\t0:0:0:0:0:0"; if(NF==5) printf "\n" }' | \
       gzip -f -c > ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
 

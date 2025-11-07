@@ -583,6 +583,7 @@ check_exit_status () {
       if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
+      chrs=$( cat $focalFile | grep "$prefix" | cut -f2 -d',' )
 
       nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
               BEGIN {
@@ -669,7 +670,7 @@ check_exit_status () {
 
     }
     export -f doSNAPE_function
-    export nflies theta D priortype fold chr sample output nXchr refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel
+    export nflies theta D priortype fold chr sample output nXchr refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
     parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?

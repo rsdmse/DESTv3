@@ -626,10 +626,10 @@ check_exit_status () {
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
-      gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.output.txt
+      gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
       python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
-      --input ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.output.txt.gz \
+      --input ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt.gz \
       --ref ${refOut} \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE
 

@@ -674,8 +674,8 @@ check_exit_status () {
 
       mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
 
-      gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
-      gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
+      gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+      gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
 
     }
     export -f doSNAPE_function

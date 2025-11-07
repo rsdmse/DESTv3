@@ -170,11 +170,6 @@ check_exit_status () {
 #######################
 ### What am I doing ###
 #######################
-  echo "Prep Reference Genome: "$prepRef
-  echo "Map reads: "$do_map
-  echo "Do Pool-SNP: "$do_poolsnp
-  echo "Do SNAPE: "$do_snape
-
   if [ $do_single_end -eq "0"  ]; then
     read1=$1; shift
     read2=$1; shift
@@ -188,7 +183,7 @@ check_exit_status () {
     output=$1; shift
   fi
 
-  echo -e "This is DEST v. ${version} \n Parameters as interpreted + those assumed by default --> \n"
+  echo -e "This is DEST v.3.0.0 \n Parameters as interpreted + those assumed by default --> \n"
   echo -e \
   "pe (0) or se (1)? =" $do_single_end "\n" \
   "r1 =" $read1 "\n" \
@@ -676,12 +671,13 @@ check_exit_status () {
 
       gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
       gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
-
+      gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.bed.gz
+      gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.bed.gz
     }
     export -f doSNAPE_function
     export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
-    # parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect
@@ -689,20 +685,36 @@ check_exit_status () {
     collectSNAPE_function () {
       prefix=$( echo $1 | cut -f1 -d',')
 
-      cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync > \
-      ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync
+      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.sync.gz
+      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.txt.gz
 
-      cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync > \
-      ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-      rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync
+      ### sync files
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync > \
+        ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.masked.sync
 
-      bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
-      tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync > \
+        ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.masked.sync
 
-      bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
-      tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+      ### bed files
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.bed > \
+        ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.bed
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.complete.bed
 
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.bed > \
+        ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.bed
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.SNAPE.monomorphic.bed
+
+      ### compressing
+        bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync
+        tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.masked.sync.gz
+
+        bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync
+        tabix -f -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.masked.sync.gz
+
+        bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.monomorphic.bed
+        bgzip -f ${output}/${sample}/${sample}.${prefix}.SNAPE.complete.bed
       #check_exit_status "tabix" $?
 
     }
@@ -721,4 +733,4 @@ check_exit_status () {
 ###########
 ### Bye ###
 ###########
-  echo "Completed: "${date}
+  echo "Completed: " $( date "+%Y-%m-%d %H:%M:%S" )

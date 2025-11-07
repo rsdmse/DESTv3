@@ -676,7 +676,7 @@ check_exit_status () {
 
     }
     export -f doSNAPE_function
-    export nflies theta D priortype fold chr sample output refOut prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
+    export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
     parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?

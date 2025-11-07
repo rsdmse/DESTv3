@@ -618,7 +618,7 @@ check_exit_status () {
       if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
         nChr=$((${nflies}*2))
       else
-        nChr=nXchr
+        nChr=${nXchr}
       fi
 
       snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < \

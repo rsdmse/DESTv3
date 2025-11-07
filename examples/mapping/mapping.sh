@@ -58,7 +58,7 @@ DE_Bad_Bro_1_2020-07-16 \
 --reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --do_snape 0 \
---do_poolsnp 0 \
+--do_poolsnp 1 \
 --do_map 0 \
---do_pileup 1 \
+--do_pileup 0 \
 --prep_reference 0

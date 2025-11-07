@@ -257,19 +257,34 @@ check_exit_status () {
         java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
       fi
 
-      while read p; do
-         #prefix=mel
-         prefix=$( echo $p | cut -f1 -d',')
-         echo $prefix
-         chrs=$( echo $p | cut -f2 -d',')
-         echo $chrs
-         refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
-         samtools faidx ${ref} ${chrs} > ${refOut}
+      makePickles () {
+        # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa; prefix=mel; chrs=2L
+        prefix=$( echo $1 | cut -f1 -d',')
+        echo $prefix
+        chrs=$( echo $1 | cut -f2 -d',')
+        echo $chrs
 
-         python3 /opt/DESTv3/mappingPipeline/scripts/PickleRef.py \
-             --ref ${refOut} \
-             --output ${refOut}
-      done < ${focalFile}
+        picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
+        if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
+        refStem=$( echo $ref | awk -F'/' '{print $NF}' )
+        refOut=${picklesDir}/${prefix}_${chrs}.$refStem
+
+        echo "extracing chromosome: "$prefix $chrs
+        samtools faidx ${ref} ${chrs} > ${picklesDir}/${prefix}_${chrs}.$refStem
+
+        echo "indexing chromosome: "$prefix $chrs
+        samtools faidx ${picklesDir}/${prefix}_${chrs}.$refStem
+
+        echo "pickling chromosome: "$prefix $chrs
+        python3 /opt/DESTv3/mappingPipeline/scripts/PickleRef.py \
+        --ref ${picklesDir}/${prefix}_${chrs}.$refStem \
+        --output ${picklesDir}/${prefix}_${chrs}.$refStem
+
+      }
+      export -f makePickles
+      export ref
+
+      parallel -j ${threads} makePickles ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
       exit
     fi
 
@@ -446,15 +461,14 @@ check_exit_status () {
        prefix=$( echo $1 | cut -f1 -d',')
        chr=$( echo $1 | cut -f2 -d',')
        # prefix=sim; chr=sim_2L
-       refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+
+       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
+       if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
+       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
+       refOut=${picklesDir}/${prefix}_${chrs}.$refStem
 
        echo "making pileup for " ${1}
-       #echo $1
-       #echo $prefix
-       #echo $chr
-       #echo $sample
-       #echo ${refOut}
-       samtools view -O BAM ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
+       samtools view -b ${output}/${sample}/${sample}.${prefix}.bam ${chr} | \
        samtools mpileup -  \
        -B \
        -Q ${base_quality_threshold} \
@@ -482,8 +496,13 @@ check_exit_status () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
       # prefix=sim; chr=sim_2L
-      refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
 
+      picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
+      if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
+      refStem=$( echo $ref | awk -F'/' '{print $NF}' )
+      refOut=${picklesDir}/${prefix}_${chrs}.$refStem
+
+      echo ${prefix}" "${refOut}
       python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
       --mpileup $output/$sample/${sample}.${prefix}.${chr}.mpileup.txt \
       --ref ${refOut}.ref \
@@ -559,7 +578,10 @@ check_exit_status () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
       # prefix=sim; chr=sim_2L
-      refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+      picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
+      if [ ! -d "${picklesDir}" ]; then mkdir ${picklesDir}; fi
+      refStem=$( echo $ref | awk -F'/' '{print $NF}' )
+      refOut=${picklesDir}/${prefix}_${chrs}.$refStem
 
       nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
               BEGIN {

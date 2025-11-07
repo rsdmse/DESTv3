@@ -625,14 +625,6 @@ check_exit_status () {
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
-      #output=/scratch/aob2x/dest_v3_output/
-      #sample=DE_Bad_Bro_1_2020-07-16
-      #prefix=mel
-      #chr=2L
-      #max_cov=0.95
-      #min_cov=4
-      #maxsnape=.9
-      #ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
       gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
       python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \
@@ -653,9 +645,20 @@ check_exit_status () {
       --SNAPE
 
       #check_exit_status "MaskSYNC_SNAPE_Complete" $?
+      #output=/scratch/aob2x/dest_v3_output
+      #sample=DE_Bad_Bro_1_2020-07-16
+      #chr=sim_2L
+      #prefix=sim
+      #min_cov=4
+      #max_cov=.95
+      #maxsnape=.9
 
-      mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync.gz \
-      ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+      #mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync \
+      #${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync
+#
+      #gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
+      cat ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync | awk '{printf$0; if(NF==4) print "\t0:0:0:0:0:0"; if(NF==5) printf "\n" }' | \
+      gzip -f -c > ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
 
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
       --sync ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz \
@@ -669,7 +672,7 @@ check_exit_status () {
 
       #check_exit_status "MaskSYNC_SNAPE_Monomporphic_Filter" $?
 
-      mv ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}.SNAPE.monomorphic.masked.sync.gz
+      mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic_masked.sync.gz ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz
 
       gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
       gunzip ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.masked.sync.gz

@@ -583,7 +583,7 @@ check_exit_status () {
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
       chrs=$( cat $focalFile | grep "$prefix" | cut -f2 -d',' )
 
-      nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | grep -E $( echo "$chrs" | sed 's/ /|/g' ) | awk -v nFlies=${nflies} '
+      nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | awk -v nFlies=${nflies} '
               BEGIN {
                 autLen=0
                 sexLen=0
@@ -612,7 +612,7 @@ check_exit_status () {
                 print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
                 print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
               }
-              ')
+              ' )
       echo "number of estimated X-chromosomes" $nXchr
 
       if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
@@ -625,14 +625,14 @@ check_exit_status () {
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
-      # output=/scratch/aob2x/dest_v3_output/
-      # sample=DE_Bad_Bro_1_2020-07-16
-      # prefix=mel
-      # chr=2L
-      # max_cov=0.95
-      # min_cov=4
-      # maxsnape=.9
-      # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+      #output=/scratch/aob2x/dest_v3_output/
+      #sample=DE_Bad_Bro_1_2020-07-16
+      #prefix=mel
+      #chr=2L
+      #max_cov=0.95
+      #min_cov=4
+      #maxsnape=.9
+      #ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
       gzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.txt
 
       python3 /opt/DESTv3/mappingPipeline/scripts/SNAPE2SYNC.py \

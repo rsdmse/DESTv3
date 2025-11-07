@@ -531,6 +531,7 @@ check_exit_status () {
     }
     export -f doPOOLSNP_function
     export output sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding minIndel
+    cat $focalFile
     parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 

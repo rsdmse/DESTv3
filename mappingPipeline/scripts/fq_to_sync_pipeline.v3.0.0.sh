@@ -540,7 +540,8 @@ check_exit_status () {
 
       #check_exit_status "MaskSYNC" $?
       echo "gunzipping: "${prefix}" "${refOut}
-
+      mv $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp_masked.sync.gz $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
+      
       gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
       gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz
 

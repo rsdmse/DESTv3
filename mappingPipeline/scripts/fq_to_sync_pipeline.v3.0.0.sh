@@ -286,7 +286,7 @@ check_exit_status () {
       export -f makePickles
       export ref
 
-      parallel -j ${threads} makePickles ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+      parallel -j ${threads} makePickles ::: $( cat $focalFile ) ### | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
       exit
     fi
 
@@ -432,13 +432,14 @@ check_exit_status () {
 
     ### output and format bam files focusing on specific genomes; make pileup
       while read p; do
-           #prefix=mel
-           prefix=$( echo $p | cut -f1 -d',')
+           prefix=${p}
            echo $prefix
-           chrs=$( echo $p | cut -f2 -d',')
+
+           chrs=$( grep ${prefix} ${focalFile} | cut -f2 -d',' | tr '\n' ' ' )
+
            echo $chrs
            refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
-
+           echo $refOut
            samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam ${chrs} -b > $output/$sample/${sample}.${prefix}.bam
 
            #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
@@ -446,7 +447,7 @@ check_exit_status () {
            mv $output/$sample/${sample}.${prefix}.sort.bam $output/$sample/${sample}.${prefix}.bam
            samtools index $output/$sample/${sample}.${prefix}.bam
 
-      done < ${focalFile}
+      done < $( cat ${focalFile} | cut -f1 -d',' | uniq )
 
       mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
       rm $output/$sample/${sample}.contaminated_realigned.bai
@@ -482,7 +483,7 @@ check_exit_status () {
     export output sample base_quality_threshold ref
 
     echo "run doPILEUP_function"
-    parallel -j ${threads} doPILEUP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doPILEUP_function ::: $( cat $focalFile ) ###| awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
   fi
@@ -549,14 +550,14 @@ check_exit_status () {
     export -f doPOOLSNP_function
     export output sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding minIndel
     #cat $focalFile
-    parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile ) ###| awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect
     echo "collecting PoolSNP"
     collectPOOLSNP_function () {
         prefix=${1}
-        
+
         cat ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.sync |
         bgzip -c > ${output}/${sample}/${sample}.${prefix}.poolsnp.sync.gz
         rm ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.sync
@@ -590,6 +591,10 @@ check_exit_status () {
 ### do SNAPE ###
 ################
   if [ $do_snape -eq "1" ]; then
+
+    ### Estimate numbers for each species
+    
+
 
     ### Run SNAPE
     echo "Do SNAPE"
@@ -701,7 +706,7 @@ check_exit_status () {
     export -f doSNAPE_function
     export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
 
-    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile ) ### | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect

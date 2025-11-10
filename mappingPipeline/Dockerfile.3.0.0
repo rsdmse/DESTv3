@@ -63,6 +63,8 @@ RUN apt install -y --no-install-recommends \
     r-recommended && \
     rm -rf /var/lib/apt/lists/*
 
+RUN R -e "install.packages(c('data.table'), repos='https://cran.r-project.org')"
+
 #Have not used
 # install bam2fastq
 #ARG BAM2FASTQ_VERSION=1.1.0

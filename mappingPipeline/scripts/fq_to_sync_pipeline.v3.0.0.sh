@@ -54,10 +54,6 @@ check_exit_status () {
   	  do_single_end=1
       shift # past argument
   	  ;;
-      -dps|--do_poolsnp)
-      do_poolsnp=$2
-      shift # past argument
-      ;;
       -bq|--base-quality-threshold)
       base_quality_threshold="$2"
       shift # past argument
@@ -129,11 +125,6 @@ check_exit_status () {
       shift # past argument
       shift # past value
       ;;
-      -ds|--do_snape)
-      do_snape=$2
-      shift # past argument
-      shift # past value
-      ;;
       -ref|--reference_genome)
       ref=$2
       shift # past argument
@@ -151,6 +142,14 @@ check_exit_status () {
       ;;
       -domap|--do_map)
       do_map=$2
+      shift # past argument
+      shift # past value
+      -dps|--do_poolsnp)
+      do_poolsnp=$2
+      shift # past argument
+      ;;
+      -ds|--do_snape)
+      do_snape=$2
       shift # past argument
       shift # past value
       ;;

@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5316539
-### cat /scratch/aob2x/logs/RunDest.5316539*.out
+### sacct -j 5478701
+### cat /scratch/aob2x/logs/RunDest.5478701*.out
 # ijob -A berglandlab -c20 -p standard --mem=64G
 
 

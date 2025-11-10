@@ -595,7 +595,7 @@ check_exit_status () {
     ### Estimate numbers for each species
     echo "Estimating species and sex ratio"
     samtools idxstats $output/$sample/${sample}.original.bam > $output/$sample/${sample}.original.bam.idxstats
-    R /opt/DESTv3/mappingPipeline/scripts/species_sex_estimate.R ${focalFile} $output/$sample/${sample}.original.bam.idxstats ${nFlies}
+    Rscript --vanilla /opt/DESTv3/mappingPipeline/scripts/species_sex_estimate.R ${focalFile} $output/$sample/${sample}.original.bam.idxstats ${nFlies}
     focalFile_idx=${output}/${sample}/${sample}.original.bam.idxstats
     echo $focalFile_idx
 

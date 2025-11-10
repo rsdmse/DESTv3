@@ -503,11 +503,11 @@ check_exit_status () {
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
 
-      echo ${prefix}" "${refOut}
+      echo "Mpileup2Sync: "${prefix}" "${refOut}
       python3 /opt/DESTv3/mappingPipeline/scripts/Mpileup2Sync.py \
       --mpileup $output/$sample/${sample}.${prefix}.${chr}.mpileup.txt \
       --ref ${refOut}.ref \
-      --output $output/$sample/${sample}.${prefix}.${chr}_chr \
+      --output $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp \
       --base-quality-threshold $base_quality_threshold \
       --coding $illumina_quality_coding \
       --minIndel $minIndel
@@ -515,8 +515,10 @@ check_exit_status () {
       #check_exit_status "Mpileup2Sync" $?
 
       #For the PoolSNP output
+      echo "MaskSYNC: "${prefix}" "${refOut}
+
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
-      --sync $output/$sample/${sample}.${prefix}.${chr}_chr.sync.gz \
+      --sync $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz \
       --output $output/$sample/${sample}.${prefix}.${chr}_chr \
       --indel $output/$sample/${sample}.${prefix}.indel \
       --coverage $output/$sample/${sample}.${prefix}.cov \
@@ -526,8 +528,8 @@ check_exit_status () {
 
       #check_exit_status "MaskSYNC" $?
 
-      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.masked.sync.gz
-      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.sync.gz
+      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
+      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz
 
     }
     export -f doPOOLSNP_function

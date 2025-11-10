@@ -596,8 +596,8 @@ check_exit_status () {
     echo "Estimating species and sex ratio"
     samtools idxstats $output/$sample/${sample}.original.bam > $output/$sample/${sample}.original.bam.idxstats
     Rscript --vanilla /opt/DESTv3/mappingPipeline/scripts/species_sex_estimate.R ${focalFile} $output/$sample/${sample}.original.bam.idxstats ${nFlies}
-    focalFile_idx=${output}/${sample}/${sample}.original.bam.idxstats
-    echo $focalFile_idx
+    focalFile_idx=${output}/${sample}/${sample}.original.bam.idxstats.focalFile
+    cat $focalFile_idx
 
     ### Run SNAPE
     echo "Do SNAPE"
@@ -606,49 +606,26 @@ check_exit_status () {
       chr=$( echo $1 | cut -f2 -d',')
       nChr=$( echo $1 | cut -f4 -d',')
 
-      # prefix=sim; chr=sim_2L
+      ### demo
+      # prefix=sim; chr=sim_mtDNA; nChr=40
+      # output=/scratch/aob2x/dest_v3_output
+      # sample=DE_Bad_Bro_1_2020-07-16
+      # chr=sim_mtDNA
+      # prefix=sim
+      # min_cov=4
+      # max_cov=.95
+      # maxsnape=.9
+      # focalFile=/scratch/aob2x/tmpRef/focalFile.csv
+      # theta=0.005
+      # D=0.01
+      # priortype="informative"
+      # fold="unfolded"
+      # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
       chrs=$( cat $focalFile | grep "$prefix" | cut -f2 -d',' )
-
-#    nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | awk -v nFlies=${nflies} '
-#            BEGIN {
-#              autLen=0
-#              sexLen=0
-#              autRD=0
-#              sexRD=0
-#            }
-#            {
-#              if($3>0) {
-#                if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
-#                  autLen+=$2
-#                  autRD+=$3
-#                }
-#                if(match($0, /X/)) {
-#                  sexLen+=$2
-#                  sexRD+=$3
-#                }
-#              }
-#            }
-#            END {
-#              print "autCov: "autRD/autLen  > "/dev/stderr"
-#              print "sexCov: "sexRD/sexLen  > "/dev/stderr"
-#              print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
-#              propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
-#              print "prop Female: " propFemale  > "/dev/stderr"
-#              print "nFemales: " propFemale*nFlies  > "/dev/stderr"
-#              print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
-#              print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
-#            }
-#            ' )
-#    echo "number of estimated X-chromosomes" $nXchr
-
-#    if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
-#      nChr=$((${nflies}*2))
-#    else
-#      nChr=${nXchr}
-#    fi
 
       snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < \
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
@@ -672,15 +649,6 @@ check_exit_status () {
       --maxcov $max_cov \
       --maxsnape $maxsnape \
       --SNAPE
-
-      #check_exit_status "MaskSYNC_SNAPE_Complete" $?
-      #output=/scratch/aob2x/dest_v3_output
-      #sample=DE_Bad_Bro_1_2020-07-16
-      #chr=sim_2L
-      #prefix=sim
-      #min_cov=4
-      #max_cov=.95
-      #maxsnape=.9
 
       mv ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete_masked.sync.gz \
       ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz

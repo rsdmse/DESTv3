@@ -539,6 +539,7 @@ check_exit_status () {
       --maxsnape $maxsnape
 
       #check_exit_status "MaskSYNC" $?
+      echo "gunzipping: "${prefix}" "${refOut}
 
       gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
       gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz

@@ -593,57 +593,62 @@ check_exit_status () {
   if [ $do_snape -eq "1" ]; then
 
     ### Estimate numbers for each species
-    
-
+    echo "Estimating species and sex ratio"
+    samtools idxstats $output/$sample/${sample}.original.bam > $output/$sample/${sample}.original.bam.idxstats
+    R /opt/DESTv3/mappingPipeline/scripts/species_sex_estimate.R ${focalFile} $output/$sample/${sample}.original.bam.idxstats ${nFlies}
+    focalFile_idx=${output}/${sample}/${sample}.original.bam.idxstats
+    echo $focalFile_idx
 
     ### Run SNAPE
     echo "Do SNAPE"
     doSNAPE_function () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
+      nChr=$( echo $1 | cut -f4 -d',')
+
       # prefix=sim; chr=sim_2L
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
       refOut=${picklesDir}/${prefix}_${chr}.$refStem
       chrs=$( cat $focalFile | grep "$prefix" | cut -f2 -d',' )
 
-      nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | awk -v nFlies=${nflies} '
-              BEGIN {
-                autLen=0
-                sexLen=0
-                autRD=0
-                sexRD=0
-              }
-              {
-                if($3>0) {
-                  if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
-                    autLen+=$2
-                    autRD+=$3
-                  }
-                  if(match($0, /X/)) {
-                    sexLen+=$2
-                    sexRD+=$3
-                  }
-                }
-              }
-              END {
-                print "autCov: "autRD/autLen  > "/dev/stderr"
-                print "sexCov: "sexRD/sexLen  > "/dev/stderr"
-                print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
-                propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
-                print "prop Female: " propFemale  > "/dev/stderr"
-                print "nFemales: " propFemale*nFlies  > "/dev/stderr"
-                print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
-                print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
-              }
-              ' )
-      echo "number of estimated X-chromosomes" $nXchr
+#    nXchr=$( samtools idxstats ${output}/${sample}/${sample}.${prefix}.bam  | awk -v nFlies=${nflies} '
+#            BEGIN {
+#              autLen=0
+#              sexLen=0
+#              autRD=0
+#              sexRD=0
+#            }
+#            {
+#              if($3>0) {
+#                if(!match($0, /X/) && !match($0, /Y/) && !match($0, /mtDNA/) && !match($0, /mitochondrion_genome/)) {
+#                  autLen+=$2
+#                  autRD+=$3
+#                }
+#                if(match($0, /X/)) {
+#                  sexLen+=$2
+#                  sexRD+=$3
+#                }
+#              }
+#            }
+#            END {
+#              print "autCov: "autRD/autLen  > "/dev/stderr"
+#              print "sexCov: "sexRD/sexLen  > "/dev/stderr"
+#              print "SR: " (autRD/autLen)/(sexRD/sexLen)  > "/dev/stderr"
+#              propFemale=(2-(autRD/autLen)/(sexRD/sexLen))/((autRD/autLen)/(sexRD/sexLen))
+#              print "prop Female: " propFemale  > "/dev/stderr"
+#              print "nFemales: " propFemale*nFlies  > "/dev/stderr"
+#              print "nMales: " (1-propFemale)*nFlies  > "/dev/stderr"
+#              print int(2*propFemale*nFlies  + (1-propFemale)*nFlies + .5)
+#            }
+#            ' )
+#    echo "number of estimated X-chromosomes" $nXchr
 
-      if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
-        nChr=$((${nflies}*2))
-      else
-        nChr=${nXchr}
-      fi
+#    if [[ "$chr" != *"_X"* && "$chr" != *"_Y"* && "$chr" != *"_mtDNA"* ]]; then
+#      nChr=$((${nflies}*2))
+#    else
+#      nChr=${nXchr}
+#    fi
 
       snape-pooled -nchr ${nChr} -theta $theta -D $D -priortype $priortype -fold $fold < \
       ${output}/${sample}/${sample}.${prefix}.${chr}.mpileup.txt > \
@@ -704,9 +709,9 @@ check_exit_status () {
       gunzip -f ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic.bed.gz
     }
     export -f doSNAPE_function
-    export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile
+    export nflies theta D priortype fold chr sample output ref prefix min_cov max_cov maxsnape illumina_quality_coding base_quality_threshold minIndel focalFile_idx focalFile
 
-    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile ) ### | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
+    parallel -j ${threads} doSNAPE_function ::: $( cat $focalFile_idx ) ### | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
     ### collect

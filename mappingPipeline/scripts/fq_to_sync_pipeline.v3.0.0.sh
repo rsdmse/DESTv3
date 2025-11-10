@@ -497,7 +497,19 @@ check_exit_status () {
     doPOOLSNP_function () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
-      # prefix=sim; chr=sim_2L
+
+       prefix=sim; chr=sim_2L
+      output=/scratch/aob2x/dest_v3_output
+      sample=DE_Bad_Bro_1_2020-07-16
+      chr=sim_mtDNA
+      prefix=sim
+      min_cov=4
+      max_cov=.95
+      maxsnape=.9
+      ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+      minIndel=5
+      illumina_quality_coding=1.8
+      base_quality_threshold=25
 
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
@@ -519,7 +531,7 @@ check_exit_status () {
 
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz \
-      --output $output/$sample/${sample}.${prefix}.${chr}_chr \
+      --output $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp \
       --indel $output/$sample/${sample}.${prefix}.indel \
       --coverage $output/$sample/${sample}.${prefix}.cov \
       --mincov $min_cov \
@@ -534,7 +546,7 @@ check_exit_status () {
     }
     export -f doPOOLSNP_function
     export output sample base_quality_threshold ref min_cov max_cov maxsnape illumina_quality_coding minIndel
-    cat $focalFile
+    #cat $focalFile
     parallel -j ${threads} doPOOLSNP_function ::: $( cat $focalFile | awk -F'[, ]' '{for (i=2;i<=NF;i++) {if($i!="") print $1","$i}}' )
     check_exit_status "parallel" $?
 
@@ -542,15 +554,15 @@ check_exit_status () {
     echo "collecting PoolSNP"
     collectPOOLSNP_function () {
 
-        cat ${output}/${sample}/${sample}.${prefix}.*_chr.sync |
-        bgzip -c > ${output}/${sample}/${sample}.${prefix}.sync.gz
-        rm ${output}/${sample}/${sample}.${prefix}.*_chr.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.sync |
+        bgzip -c > ${output}/${sample}/${sample}.${prefix}.poolsnp.sync.gz
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.sync
+        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.poolsnp.sync.gz
 
-        cat ${output}/${sample}/${sample}.${prefix}.*_chr.masked.sync |
-        bgzip -c > ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
-        rm ${output}/${sample}/${sample}.${prefix}.*_chr.masked.sync
-        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.masked.sync.gz
+        cat ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.masked.sync |
+        bgzip -c > ${output}/${sample}/${sample}.${prefix}.poolsnp.masked.sync.gz
+        rm ${output}/${sample}/${sample}.${prefix}.*_chr.poolsnp.masked.sync
+        tabix -s 1 -b 2 -e 2 ${output}/${sample}/${sample}.${prefix}.poolsnp.masked.sync.gz
 
     }
     export -f collectPOOLSNP_function

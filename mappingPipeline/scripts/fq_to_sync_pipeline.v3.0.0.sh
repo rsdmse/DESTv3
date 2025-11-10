@@ -498,18 +498,18 @@ check_exit_status () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
 
-       prefix=sim; chr=sim_2L
-      output=/scratch/aob2x/dest_v3_output
-      sample=DE_Bad_Bro_1_2020-07-16
-      chr=sim_mtDNA
-      prefix=sim
-      min_cov=4
-      max_cov=.95
-      maxsnape=.9
-      ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-      minIndel=5
-      illumina_quality_coding=1.8
-      base_quality_threshold=25
+      # prefix=sim; chr=sim_2L
+      # output=/scratch/aob2x/dest_v3_output
+      # sample=DE_Bad_Bro_1_2020-07-16
+      # chr=sim_mtDNA
+      # prefix=sim
+      # min_cov=4
+      # max_cov=.95
+      # maxsnape=.9
+      # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+      # minIndel=5
+      # illumina_quality_coding=1.8
+      # base_quality_threshold=25
 
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )
@@ -540,8 +540,8 @@ check_exit_status () {
 
       #check_exit_status "MaskSYNC" $?
 
-      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
-      gunzip $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz
+      gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.masked.sync.gz
+      gunzip -f $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz
 
     }
     export -f doPOOLSNP_function

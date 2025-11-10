@@ -35,6 +35,7 @@ check_exit_status () {
   do_pileup=1
   do_snape=1
   do_poolsnp=1
+  do_cleanup=0
   ref_genome="path_to_ref_fasta"
   focalFile="path_to_focalFile_csv"
 
@@ -158,6 +159,11 @@ check_exit_status () {
       shift # past argument
       shift # past value
       ;;
+      -docleanup|--do_cleanup)
+      do_cleanup=$2
+      shift # past argument
+      shift # past value
+      ;;
       *)    # unknown option
       POSITIONAL+=("$1") #save it to an array
       shift
@@ -207,6 +213,7 @@ check_exit_status () {
   "do pileup? (0 = no; 1 = yes) =" $do_pileup "\n" \
   "do snape? (0 = no; 1 = yes) =" $do_snape "\n" \
   "do poolsnp? (0 = no; 1 = yes) =" $do_poolsnp "\n" \
+  "do cleanup? (0 = no; 1 = yes) =" $do_cleanup "\n" \
   "reference genome =" $ref "\n" \
   "focal chromosome file=" $focalFile "\n" \
 
@@ -728,6 +735,23 @@ check_exit_status () {
     echo "D:  $D" >> $output/$sample/${sample}.parameters.txt
     echo "priortype: $priortype" >> $output/$sample/${sample}.parameters.txt
     echo "species prefix ${prefix}" >> $output/$sample/${sample}.parameters.txt
+  fi
+
+###############
+### Cleanup ###
+###############
+  if [ $do_cleanup -eq "1" ]; then
+    cleanupPileup () {
+      prefix=${1}
+
+      tar czvf ${output}/${sample}/${sample}.${prefix}.mpileup.tar.gz ${output}/${sample}/${sample}.${prefix}*.mpileup.txt
+      rm ${output}/${sample}/${sample}.${prefix}*.mpileup.txt
+
+    }
+    export -f cleanupPileup
+    export sample output
+    parallel ::: $( cat $focalFile | cut -f1 -d',' )
+
   fi
 
 ###########

@@ -8,6 +8,7 @@ library(data.table)
 # focalFile="/scratch/aob2x/tmpRef/focalFile.csv"
 # idxfn="/scratch/aob2x/dest_v3_output/DE_Bad_Bro_1_2020-07-16/DE_Bad_Bro_1_2020-07-16.original.bam.idxstats"
 # nFlies=40
+## test
 
 idx <- fread(idxfn, header=F)
 ff <- fread(focalFile, header=F)

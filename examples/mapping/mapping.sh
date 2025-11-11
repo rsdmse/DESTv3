@@ -12,8 +12,8 @@
 
 
 ### run as: sbatch /home/aob2x/DESTv3/examples/mapping/mapping.sh
-### sacct -j 5478701
-### cat /scratch/aob2x/logs/RunDest.5478701*.out
+### sacct -j 5479919
+### cat /scratch/aob2x/logs/RunDest.5479919*.out
 # ijob -A berglandlab -c20 -p standard --mem=64G
 
 
@@ -34,10 +34,10 @@ DE_Bad_Bro_1_2020-07-16 \
 --reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
 --focal_file /scratch/aob2x/tmpRef/focalFile.csv \
 --prep_reference 0 \
---do_map 1 \
+--do_map 0 \
 --do_pileup 1 \
---do_poolsnp 1 \
---do_snape 1 \
+--do_poolsnp 0 \
+--do_snape 0 \
 --do_cleanup 0
 
 ### foo

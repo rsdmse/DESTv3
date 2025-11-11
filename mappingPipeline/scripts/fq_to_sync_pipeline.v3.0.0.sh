@@ -208,7 +208,7 @@ check_exit_status () {
   "illumina quality coding =" $illumina_quality_coding "\n" \
   "minIndel =" $minIndel "\n" \
   "Prep Reference Genome (0 = no; 1 = yes) =" $prepRef "\n" \
-  "map reads (0 = no; 1 = yes) =" $do_map "\n" \
+  "map reads? (0 = no; 1 = yes) =" $do_map "\n" \
   "do pileup? (0 = no; 1 = yes) =" $do_pileup "\n" \
   "do snape? (0 = no; 1 = yes) =" $do_snape "\n" \
   "do poolsnp? (0 = no; 1 = yes) =" $do_poolsnp "\n" \
@@ -430,27 +430,37 @@ check_exit_status () {
       rm $output/$sample/${sample}.dedup.bam*
 
     ### output and format bam files focusing on specific genomes; make pileup
-      while read p; do
-           prefix=${p}
-           echo $prefix
+    sample=DE_Bad_Bro_1_2020-07-16
+    output=/scratch/aob2x/dest_v3_output/
+    threads=20
+    ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
+    focalFile=/scratch/aob2x/tmpRef/focalFile.csv
 
-           chrs=$( grep ${prefix} ${focalFile} | cut -f2 -d',' | tr '\n' ' ' )
+    splitBam () {
+      prefix=${1}
+      echo $prefix
 
-           echo $chrs
-           refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
-           echo $refOut
-           samtools view -@ $threads $output/$sample/${sample}.contaminated_realigned.bam ${chrs} -b > $output/$sample/${sample}.${prefix}.bam
+      chrs=$( grep ${prefix} ${focalFile} | cut -f2 -d',' | tr '\n' ' ' )
 
-           #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
-           samtools sort --reference ${refOut} -@ ${threads} $output/$sample/${sample}.${prefix}.bam -o $output/$sample/${sample}.${prefix}.sort.bam
-           mv $output/$sample/${sample}.${prefix}.sort.bam $output/$sample/${sample}.${prefix}.bam
-           samtools index $output/$sample/${sample}.${prefix}.bam
+      echo $chrs
+      refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
+      echo $refOut
+      #samtools view -@ ${threads} ${output}/${sample}/${sample}.contaminated_realigned.bam ${chrs} -b > ${output}/${sample}/${sample}.${prefix}.bam
+      samtools view -@ ${threads} ${output}/${sample}/${sample}.original.bam ${chrs} -b > ${output}/${sample}/${sample}.${prefix}.bam
 
-      done < $( cat ${focalFile} | cut -f1 -d',' | uniq )
+      #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
+      samtools sort --reference ${refOut} -@ ${threads} ${output}/${sample}/${sample}.${prefix}.bam -o ${output}/${sample}/${sample}.${prefix}.sort.bam
+      mv ${output}/${sample}/${sample}.${prefix}.sort.bam ${output}/${sample}/${sample}.${prefix}.bam
+      samtools index ${output}/${sample}/${sample}.${prefix}.bam
 
-      mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
-      rm $output/$sample/${sample}.contaminated_realigned.bai
-      samtools index $output/$sample/${sample}.original.bam
+    }
+    export -f splitBam
+    export focalFile ref threads output sample
+    parallel -j 1 splitBam ::: $( cat ${focalFile} | cut -f1 -d',' | uniq )
+
+    mv $output/$sample/${sample}.contaminated_realigned.bam  $output/$sample/${sample}.original.bam
+    rm $output/$sample/${sample}.contaminated_realigned.bai
+    samtools index $output/$sample/${sample}.original.bam
   fi
 
 #################
@@ -532,8 +542,8 @@ check_exit_status () {
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz \
       --output $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp \
-      --indel $output/$sample/${sample}.${prefix}.indel \
-      --coverage $output/$sample/${sample}.${prefix}.cov \
+      --indel $output/$sample/${sample}.${prefix}_chr.indel \
+      --coverage $output/$sample/${sample}.${prefix}_chr.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape
@@ -642,8 +652,8 @@ check_exit_status () {
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync   ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.sync.gz \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete \
-      --indel     ${output}/${sample}/${sample}.${prefix}.indel \
-      --coverage  ${output}/${sample}/${sample}.${prefix}.cov \
+      --indel     ${output}/${sample}/${sample}.${prefix}_chr.indel \
+      --coverage  ${output}/${sample}/${sample}.${prefix}_chr.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape \

@@ -4,7 +4,10 @@
 ## Changes to Version 3.0 (Fall 2025)
 More flexibility on the reference genome.
 
-Notes - sex chromosomes in focal file must end in "_X" and "_Y"
+1. prepReference needs to be run first, alone
+2. map reads and do_pileup need to be run before or at the same time as do_poolsnp and do_snape
+3. do_poolsnp needs to be run before or at the same time as do_snape (this is because of two files, cov and indel)
+4. 
 
 rebuild docker on local computer
 ```

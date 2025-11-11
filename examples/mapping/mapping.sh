@@ -37,7 +37,7 @@ DE_Bad_Bro_1_2020-07-16 \
 --do_map 0 \
 --do_pileup 0 \
 --do_poolsnp 1 \
---do_snape 0 \
+--do_snape 1 \
 --do_cleanup 0
 
 ### foo
@@ -60,6 +60,6 @@ DE_Bad_Bro_1_2020-07-16 \
 --prep_reference 0 \
 --do_map 0 \
 --do_pileup 0 \
---do_poolsnp 0 \
+--do_poolsnp 1 \
 --do_snape 1 \
 --do_cleanup 0

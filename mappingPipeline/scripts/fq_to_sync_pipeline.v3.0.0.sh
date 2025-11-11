@@ -1,9 +1,10 @@
 #!/bin/bash
 
-### Updated by Alan Bergland
 ## version=3.0
-### Oct 20, 2025
+### Updated by Alan Bergland Oct 20, 2025
+### Previous versions by Joaquin Nunez (DESTv2) & Joseph Outen (DESTv1)
 
+q
 check_exit_status () {
   if [ ! "$2" -eq "0" ]; then
     echo "Step $1 failed with exit status $2"
@@ -755,10 +756,21 @@ check_exit_status () {
       tar czvf ${output}/${sample}/${sample}.${prefix}.mpileup.tar.gz ${output}/${sample}/${sample}.${prefix}*.mpileup.txt
       rm ${output}/${sample}/${sample}.${prefix}*.mpileup.txt
 
+      tar czvf ${output}/${sample}/${sample}.${prefix}.poolsnp.bed.tar.gz ${output}/${sample}/${sample}.${prefix}*.poolsnp.bed.gz
+      rm ${output}/${sample}/${sample}.${prefix}*.poolsnp.bed.gz
+
+      tar czvf ${output}/${sample}/${sample}.${prefix}.poolsnp.cov.tar.gz ${output}/${sample}/${sample}.${prefix}*.poolsnp.cov
+      rm ${output}/${sample}/${sample}.${prefix}*.poolsnp.cov
+
+      tar czvf ${output}/${sample}/${sample}.${prefix}.poolsnp.indel.tar.gz ${output}/${sample}/${sample}.${prefix}*.poolsnp.indel
+      rm ${output}/${sample}/${sample}.${prefix}*.poolsnp.indel
     }
     export -f cleanupPileup
+     output=/scratch/aob2x/dest_v3_output
+     sample=DE_Bad_Bro_1_2020-07-16
+     focalFile=/scratch/aob2x/tmpRef/focalFile.csv
     export sample output
-    parallel ::: $( cat $focalFile | cut -f1 -d',' )
+    parallel -j ${threads} cleanupPileup ::: $( cat $focalFile | cut -f1 -d',' | uniq )
 
   fi
 

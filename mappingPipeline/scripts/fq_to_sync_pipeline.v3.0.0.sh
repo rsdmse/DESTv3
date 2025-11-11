@@ -673,8 +673,8 @@ check_exit_status () {
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
       --sync ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic \
-      --indel $output/$sample/${sample}.${prefix}_chr.poolsnp.indel \
-      --coverage $output/$sample/${sample}.${prefix}_chr.poolsnp.cov \
+      --indel $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.indel \
+      --coverage $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape \

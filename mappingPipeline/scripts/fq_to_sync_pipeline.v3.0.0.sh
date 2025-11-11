@@ -581,7 +581,7 @@ check_exit_status () {
 
     }
     export -f collectPOOLSNP_function
-    parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalFile | cut -f1 -d',' )
+    parallel -j ${threads} collectPOOLSNP_function ::: $( cat $focalFile | cut -f1 -d',' | uniq )
     check_exit_status "parallel" $?
 
     ### send it
@@ -734,7 +734,7 @@ check_exit_status () {
 
     }
     export -f collectSNAPE_function
-    parallel -j ${threads} collectSNAPE_function ::: $( cat $focalFile | cut -f1 -d',' )
+    parallel -j ${threads} collectSNAPE_function ::: $( cat $focalFile | cut -f1 -d',' | uniq )
     check_exit_status "parallel" $?
 
     ### send it

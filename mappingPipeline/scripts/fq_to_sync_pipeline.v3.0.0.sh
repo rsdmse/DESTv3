@@ -144,9 +144,11 @@ check_exit_status () {
       do_map=$2
       shift # past argument
       shift # past value
+      ;;
       -dps|--do_poolsnp)
       do_poolsnp=$2
       shift # past argument
+      shift # past value
       ;;
       -ds|--do_snape)
       do_snape=$2

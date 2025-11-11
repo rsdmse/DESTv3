@@ -544,8 +544,8 @@ check_exit_status () {
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp.sync.gz \
       --output $output/$sample/${sample}.${prefix}.${chr}_chr.poolsnp \
-      --indel $output/$sample/${sample}.${prefix}_chr.indel \
-      --coverage $output/$sample/${sample}.${prefix}_chr.cov \
+      --indel $output/$sample/${sample}.${prefix}.${chr}_chr.indel \
+      --coverage $output/$sample/${sample}.${prefix}.${chr}_chr.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape
@@ -654,8 +654,8 @@ check_exit_status () {
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync   ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.sync.gz \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete \
-      --indel     ${output}/${sample}/${sample}.${prefix}_chr.indel \
-      --coverage  ${output}/${sample}/${sample}.${prefix}_chr.cov \
+      --indel     ${output}/${sample}/${sample}.${prefix}.${chr}_chr.indel \
+      --coverage  ${output}/${sample}/${sample}.${prefix}.${chr}_chr.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape \

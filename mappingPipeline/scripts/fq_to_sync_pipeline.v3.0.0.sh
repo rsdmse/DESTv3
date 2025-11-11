@@ -652,7 +652,6 @@ check_exit_status () {
       #check_exit_status "SNAPE2SYNC" $?
 
       ### NB - the command below requires that we run poolsnp before SNAPE. THis needs to be changed.
-
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_complete.py \
       --sync   ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.sync.gz \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete \
@@ -670,11 +669,12 @@ check_exit_status () {
       cat ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync | awk '{printf$0; if(NF==4) print "\t0:0:0:0:0:0"; if(NF==5) printf "\n" }' | \
       gzip -f -c > ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz
 
+      ### NB - the command below requires that we run poolsnp before SNAPE. THis needs to be changed.
       python3 /opt/DESTv3/mappingPipeline/scripts/MaskSYNC_snape_monomorphic_filter.py \
       --sync ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.complete.masked.sync.gz \
       --output ${output}/${sample}/${sample}.${prefix}.${chr}_chr.SNAPE.monomorphic \
-      --indel $output/$sample/${sample}.${prefix}_chr.SNAPE.indel \
-      --coverage $output/$sample/${sample}.${prefix}_chr.SNAPE.cov \
+      --indel $output/$sample/${sample}.${prefix}_chr.poolsnp.indel \
+      --coverage $output/$sample/${sample}.${prefix}_chr.poolsnp.cov \
       --mincov $min_cov \
       --maxcov $max_cov \
       --maxsnape $maxsnape \

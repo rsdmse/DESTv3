@@ -1,0 +1,15 @@
+mel,2L,A
+mel,2R,A
+mel,3L,A
+mel,3R,A
+mel,4,A
+mel,X,S
+mel,Y,NA
+mel,dmel_mitochondrion_genome,NA
+sim,sim_2L,A
+sim,sim_2R,A
+sim,sim_3L,A
+sim,sim_3R,A
+sim,sim_4,A
+sim,dsim_mitochondrion_genome,NA
+sim,sim_X,S

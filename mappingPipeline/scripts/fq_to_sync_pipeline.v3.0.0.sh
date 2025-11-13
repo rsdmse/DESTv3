@@ -224,46 +224,48 @@ check_exit_status () {
   "reference genome =" $ref "\n" \
   "focal chromosome file=" $focalFile "\n" \
 
-### error handling
-    ### prep ref errors
-      if [ "$prepRef" -eq "1" ] && [ "$do_poolsnp" -eq "1" ]; then
-        echo "Cannot prep ref and run mapping at once"
-        exit 1
-      fi
+######################
+### error handling ###
+######################
+  ### prep ref errors
+    if [ "$prepRef" -eq "1" ] && [ "$do_poolsnp" -eq "1" ]; then
+      echo "Cannot prep ref and run mapping at once"
+      exit 1
+    fi
 
-      if [ "$prepRef" -eq "1" ] && [ "$do_snape" -eq "1" ]; then
-        echo "Cannot prep ref and run mapping at once"
-        exit 1
-      fi
+    if [ "$prepRef" -eq "1" ] && [ "$do_snape" -eq "1" ]; then
+      echo "Cannot prep ref and run mapping at once"
+      exit 1
+    fi
 
-      if [ "$prepRef" -eq "1" ] && [ "$do_map" -eq "1" ]; then
-        echo "Cannot prep ref and run mapping at once"
-        exit 1
-      fi
+    if [ "$prepRef" -eq "1" ] && [ "$do_map" -eq "1" ]; then
+      echo "Cannot prep ref and run mapping at once"
+      exit 1
+    fi
 
-      if [ "$prepRef" -eq "1" ] && [ "$do_pileup" -eq "1" ]; then
-        echo "Cannot prep ref and run mapping at once"
-        exit 1
-      fi
+    if [ "$prepRef" -eq "1" ] && [ "$do_pileup" -eq "1" ]; then
+      echo "Cannot prep ref and run mapping at once"
+      exit 1
+    fi
 
-    ### checking that fastq files exist
-      if [ ! -f "$read1" ] && [ "$do_single_end" -eq "0"  ]; then
-        echo "ERROR: for paired end run"
-        echo "ERROR DETAILS: $read1 does not exist"
-        exit 1
-      fi
+  ### checking that fastq files exist
+    if [ ! -f "$read1" ] && [ "$do_single_end" -eq "0"  ]; then
+      echo "ERROR: for paired end run"
+      echo "ERROR DETAILS: $read1 does not exist"
+      exit 1
+    fi
 
-      if [ ! -f "$read2" ] && [ "$do_single_end" -eq "0"  ]; then
-        echo "ERROR: for paired end run"
-        echo "ERROR DETAILS: $read2 does not exist"
-        exit 1
-      fi
+    if [ ! -f "$read2" ] && [ "$do_single_end" -eq "0"  ]; then
+      echo "ERROR: for paired end run"
+      echo "ERROR DETAILS: $read2 does not exist"
+      exit 1
+    fi
 
-      if [ ! -f "$read1" ] && [ "$do_single_end" -eq "1"  ]; then
-        echo "ERROR: for single end run"
-        echo "ERROR DETAILS: $read1 does not exist"
-        exit 1
-      fi
+    if [ ! -f "$read1" ] && [ "$do_single_end" -eq "1"  ]; then
+      echo "ERROR: for single end run"
+      echo "ERROR DETAILS: $read1 does not exist"
+      exit 1
+    fi
 
 
 ################################
@@ -465,8 +467,7 @@ check_exit_status () {
       echo $chrs
       refOut=$( echo ${ref} | sed "s/fa/${prefix}.fa/g" )
       echo $refOut
-      #samtools view -@ ${threads} ${output}/${sample}/${sample}.contaminated_realigned.bam ${chrs} -b > ${output}/${sample}/${sample}.${prefix}.bam
-      samtools view -@ ${threads} ${output}/${sample}/${sample}.original.bam ${chrs} -b > ${output}/${sample}/${sample}.${prefix}.bam
+      samtools view -@ ${threads} ${output}/${sample}/${sample}.contaminated_realigned.bam ${chrs} -b > ${output}/${sample}/${sample}.${prefix}.bam
 
       #refOut=/scratch/aob2x/tmpRef/holo_dmel_6.12.sim.fa
       samtools sort --reference ${refOut} -@ ${threads} ${output}/${sample}/${sample}.${prefix}.bam -o ${output}/${sample}/${sample}.${prefix}.sort.bam
@@ -783,9 +784,10 @@ check_exit_status () {
       rm ${output}/${sample}/${sample}.${prefix}*.poolsnp.indel
     }
     export -f cleanupPileup
-     output=/scratch/aob2x/dest_v3_output
-     sample=DE_Bad_Bro_1_2020-07-16
-     focalFile=/scratch/aob2x/tmpRef/focalFile.csv
+
+    #output=/scratch/aob2x/dest_v3_output
+    #sample=DE_Bad_Bro_1_2020-07-16
+    #focalFile=/scratch/aob2x/tmpRef/focalFile.csv
     export sample output
     parallel -j ${threads} cleanupPileup ::: $( cat $focalFile | cut -f1 -d',' | uniq )
 

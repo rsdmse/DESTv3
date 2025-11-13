@@ -46,150 +46,148 @@ check_exit_status () {
 ##################################
 # Credit: https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
   POSITIONAL=()
-  while [[ $# -gt 0 ]]
-  do
-  key="$1"
-
-  case $key in
-      -h|--help)
-      echo "Usage:"
-      echo "  singularity run [options] <image> -h          Display this help message."
-      echo "	Pair-end reads mode requires:"
-      echo "  singularity run [options] <image> <fastq_file_1_path> <fastq_file_2_path> <sample_name> <output_dir> <num_cores>"
-      echo "	Single-end reads mode requires:"
-      echo "  singularity run [options] <image> <fastq_file_Single_path> <sample_name> <output_dir> <num_cores>"
-      exit 0
-      shift # past argument
-      ;;
-      -fq1|--fastq_1)
-      read1="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -fq2|--fastq_2)
-      read2="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -sample|--sample_name)
-      sample=$"$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -output|--output_directory)
-      output=$"$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -bq|--base-quality-threshold)
-      base_quality_threshold="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -ill|--illumina-quality-coding)
-      illumina_quality_coding="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -mindel|--min-indel)
-      minIndel="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -tr|--threads)
-      threads="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -x|--max-cov)
-      max_cov="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -n|--min-cov)
-      min_cov="$1"
-      shift # past argument
-      shift # past value
-      ;;
-      -t|--theta)
-      theta=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -D)
-      D=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -p|--priortype)
-      theta=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -f|--fold)
-      fold=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -ms|--maxsnape)
-      maxsnape=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -nf|--num-flies)
-      nflies=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -ref|--reference_genome)
-      ref=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -focalFile|--focal_file)
-      focalFile=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -prepRef|--prep_reference)
-      prepRef=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -do_se|--single_end)
-      do_single_end=1
-      shift # past argument
-      ;;
-      -domap|--do_map)
-      do_map=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -dps|--do_poolsnp)
-      do_poolsnp=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -ds|--do_snape)
-      do_snape=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -dopileup|--do_pileup)
-      do_pileup=$1
-      shift # past argument
-      shift # past value
-      ;;
-      -docleanup|--do_cleanup)
-      do_cleanup=$1
-      shift # past argument
-      shift # past value
-      ;;
-      *)    # unknown option
-      POSITIONAL+=("$1") #save it to an array
-      shift
-      ;;
-  esac
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        -h|--help)
+        echo "Usage:"
+        echo "  singularity run [options] <image> -h          Display this help message."
+        echo "	Pair-end reads mode requires:"
+        echo "  singularity run [options] <image> <fastq_file_1_path> <fastq_file_2_path> <sample_name> <output_dir> <num_cores>"
+        echo "	Single-end reads mode requires:"
+        echo "  singularity run [options] <image> <fastq_file_Single_path> <sample_name> <output_dir> <num_cores>"
+        exit 0
+        shift # past argument
+        ;;
+        -fq1|--fastq_1)
+        read1="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -fq2|--fastq_2)
+        read2="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -sample|--sample_name)
+        sample=$"$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -output|--output_directory)
+        output=$"$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -bq|--base-quality-threshold)
+        base_quality_threshold="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -ill|--illumina-quality-coding)
+        illumina_quality_coding="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -mindel|--min-indel)
+        minIndel="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -tr|--threads)
+        threads="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -x|--max-cov)
+        max_cov="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -n|--min-cov)
+        min_cov="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -t|--theta)
+        theta=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -D)
+        D=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -p|--priortype)
+        theta=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -f|--fold)
+        fold=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -ms|--maxsnape)
+        maxsnape=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -nf|--num-flies)
+        nflies=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -ref|--reference_genome)
+        ref=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -focalFile|--focal_file)
+        focalFile=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -prepRef|--prep_reference)
+        prepRef=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -do_se|--single_end)
+        do_single_end=1
+        shift # past argument
+        ;;
+        -domap|--do_map)
+        do_map=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -dps|--do_poolsnp)
+        do_poolsnp=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -ds|--do_snape)
+        do_snape=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -dopileup|--do_pileup)
+        do_pileup=$2
+        shift # past argument
+        shift # past value
+        ;;
+        -docleanup|--do_cleanup)
+        do_cleanup=$2
+        shift # past argument
+        shift # past value
+        ;;
+        *)    # unknown option
+        POSITIONAL+=("$1") #save it to an array
+        shift
+        ;;
+    esac
   done
 
   set -- "${POSITIONAL[@]}"

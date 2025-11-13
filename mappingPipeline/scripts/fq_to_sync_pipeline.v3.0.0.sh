@@ -249,7 +249,8 @@ check_exit_status () {
     fi
 
   ### checking that fastq files exist
-    if [ "$read1"!="NULL "] && [ "$prepRef" -eq "0" ]; then
+    if [ "$read1"!="NULL" ] && [ "$prepRef" -eq "0" ]; then
+
       if [ ! -f "$read1" ] && [ "$do_single_end" -eq "0"  ]; then
         echo "ERROR: for paired end run"
         echo "ERROR DETAILS: $read1 does not exist"

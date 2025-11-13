@@ -278,7 +278,8 @@ check_exit_status () {
     if [ ! -f ${ref}.fai ]; then samtools faidx ${ref}; fi
     if [ ! -f ${ref}.dict ]; then
       refDict=$( echo ${ref} | sed 's/fa/dict/g' )
-      java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
+      #java -jar $PICARD CreateSequenceDictionary R=${ref} O=${refDict}
+      java -jar $PICARD CreateSequenceDictionary -R ${ref} -O ${refDict}
     fi
 
     makePickles () {

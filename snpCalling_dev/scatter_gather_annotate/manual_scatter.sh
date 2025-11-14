@@ -17,17 +17,13 @@
 # cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.4243100_3.out
 
 
-
-
 module purge
 trap 'rm -rf ${tmpdir}' EXIT
 
 #module load htslib bcftools parallel intel/18.0 intelmpi/18.0 mvapich2/2.3.1 R/3.6.3 python/3.6.6 vcftools/0.1.16
 #module load htslib/1.10.2 bcftools/1.9 parallel/20200322 intel/18.0 intelmpi/18.0 R/3.6.3 python/3.6.6 vcftools/0.1.16
-module load htslib/1.17  bcftools/1.17 parallel/20200322 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 vcftools/0.1.16 R/4.3.1
+module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 vcftools/0.1.16 R/4.3.1
 module load bedtools/2.30.0
-
-### r, mvapch, parallel
 
 
 ## Run params
@@ -41,7 +37,7 @@ module load bedtools/2.30.0
   script_dir=~/DESTv3/snpCalling_dev
   pipeline_output=/scratch/aob2x/dest_v3_output
   reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
-  focal_file=/home/aob2x/DESTv3/examples/mapping/focalFile \
+  focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile \
   nJobs=5000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
 
@@ -66,7 +62,7 @@ module load bedtools/2.30.0
   fai=/Users/alanbergland/Documents/GitHub/DESTv3/snpCalling_dev/scatter_gather_annotate/holo_dmel_6.12.fa.fai
   focal_file=/Users/alanbergland/Documents/GitHub/DESTv3/examples/mapping/focalFile
 
-  Rscript 
+  Rscript makeJobs.R ${fai} ${focal_file} ${species} ${nJobs}
 
 ## get job
   #cat ${script_dir}/scatter_gather_annotate/jobs_genome.csv

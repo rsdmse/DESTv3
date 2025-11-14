@@ -39,4 +39,4 @@
   dim(wins)
 
 ### export
-  write.csv(wins, file=paste(fai.fn, species, nJobs, jobs, sep="."))
+  write.csv(wins, file=paste(fai.fn, species, nJobs, ".jobs", sep="."))

@@ -3,7 +3,7 @@
   fai.fn <- args[1]
   focalFile.fn <- args[2]
   species <- args[3]
-  nJobs <- args[4]
+  nJobs <- as.numeric(args[4])
 
 ### libraries
   library(data.table)

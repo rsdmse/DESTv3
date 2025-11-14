@@ -14,7 +14,9 @@
   #focalFile.fn="/Users/alanbergland/Documents/GitHub/DESTv3/examples/mapping/focalFile"
   #species <- "mel"
   #nJobs <- 5000
-
+  print(fai)
+  print(focalFile)
+  
   fai <- fread(fai.fn, header=F)
   focalFile <- fread(focalFile.fn, header=F)
 

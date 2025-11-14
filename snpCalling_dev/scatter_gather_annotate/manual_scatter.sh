@@ -58,11 +58,8 @@ module load bedtools/2.30.0
   #echo $( ls -l ${pipeline_output}/*/*/*.sync.gz )
   ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked"
 
-### TODO -
-  fai=/Users/alanbergland/Documents/GitHub/DESTv3/snpCalling_dev/scatter_gather_annotate/holo_dmel_6.12.fa.fai
-  focal_file=/Users/alanbergland/Documents/GitHub/DESTv3/examples/mapping/focalFile
-
-  Rscript makeJobs.R ${fai} ${focal_file} ${species} ${nJobs}
+### make Jobs file
+  Rscript makeJobs.R ${reference_genome}.fai ${focal_file} ${species} ${nJobs}
 
 ## get job
   #cat ${script_dir}/scatter_gather_annotate/jobs_genome.csv

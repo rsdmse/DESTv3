@@ -29,7 +29,7 @@ module load apptainer/1.3.4
  /scratch/aob2x/dest_v3_output/ \
  --reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
  --focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
- --prep_reference 1 \
+ --prep_reference 0 \
  --do_map 0 \
  --do_pileup 0 \
  --do_poolsnp 0 \
@@ -38,25 +38,38 @@ module load apptainer/1.3.4
 
 
 
+ singularity run \
+ /scratch/aob2x/dest_v3.sif  \
+ --reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
+ --focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
+ --prep_reference 1 \
+ --do_map 0 \
+ --do_pileup 0 \
+ --do_poolsnp 0 \
+ --do_snape 0 \
+ --do_cleanup 0
+
+
 singularity run \
 /scratch/aob2x/dest_v3.sif  \
-/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
-/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
-DE_Bad_Bro_1_2020-07-16 \
-/scratch/aob2x/dest_v3_output/ \
+--fastq_1 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
+--fastq_2 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
+--sample_name DE_Bad_Bro_1_2020-07-16 \
+--output_directory /scratch/aob2x/dest_v3_output/ \
 --threads 20 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
 --num-flies 40 \
---reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
---focal_file /scratch/aob2x/tmpRef/focalFile.csv \
+--reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
+--focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
 --prep_reference 0 \
 --do_map 0 \
 --do_pileup 0 \
---do_poolsnp 1 \
---do_snape 1 \
+--do_poolsnp 0 \
+--do_snape 0 \
 --do_cleanup 0
+
 
 ### foo
 
@@ -64,20 +77,31 @@ DE_Bad_Bro_1_2020-07-16 \
 chmod +x ~/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh
 
 ~/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh \
-/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
-/project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
-DE_Bad_Bro_1_2020-07-16 \
-/scratch/aob2x/dest_v3_output/ \
+--reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
+--focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
+--prep_reference 1 \
+--do_map 0 \
+--do_pileup 0 \
+--do_poolsnp 0 \
+--do_snape 0 \
+--do_cleanup 0
+
+
+~/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh \
+--fastq_1 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
+--fastq_2 /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
+--sample_name DE_Bad_Bro_1_2020-07-16 \
+--output_directory /scratch/aob2x/dest_v3_output/ \
 --threads 20 \
 --max-cov 0.95 \
 --min-cov 4 \
 --base-quality-threshold 25 \
 --num-flies 40 \
---reference_genome /scratch/aob2x/tmpRef/holo_dmel_6.12.fa \
---focal_file /scratch/aob2x/tmpRef/focalFile.csv \
+--reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
+--focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
 --prep_reference 0 \
 --do_map 0 \
 --do_pileup 0 \
 --do_poolsnp 1 \
---do_snape 1 \
+--do_snape 0 \
 --do_cleanup 0

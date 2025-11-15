@@ -10,7 +10,6 @@
 #SBATCH -p standard
 #SBATCH --account berglandlab_standard
 
-
 # ijob -A berglandlab -c10 -p standard --mem=24G
 # sbatch --array=1-1002 ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/manual_scatter.sh
 # sacct -j 4287499 | grep -v "COMPLE"
@@ -40,7 +39,7 @@ module load bedtools/2.30.0
   focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
   nJobs=2000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
-
+  repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
   #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
   bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 
@@ -139,7 +138,7 @@ module load bedtools/2.30.0
     --min-freq 0 \
     --posterior-prob 0.9 \
     --SNAPE \
-    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
+    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
 
   elif [[ "${method}"=="PoolSNP" ]]; then
     echo $method
@@ -151,25 +150,25 @@ module load bedtools/2.30.0
     --min-count ${mac} \
     --min-freq 0.${maf} \
     --miss-frac 0.5 \
-    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
+    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
   fi
 
 ### compress and clean up
   echo "compress and clean"
   # cp ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
   # cat ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf | bgzip -c > ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
-   cat ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf | vcf-sort | bgzip -c > ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
+  cat ${tmpdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf | vcf-sort | bgzip -c > ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
-  tabix -p vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
+  tabix -p vcf ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
+### remove repeats
+  #bedtools intersect -sorted -v -header \
+  #-b ${repeatFile} \
+  #-a ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
+  #bgzip -c > \
+  #${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
-  bedtools intersect -sorted -v -header \
-  -b ${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz \
-  -a ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
-  bgzip -c > \
-  ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
-
-  tabix -p vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+  #tabix -p vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
   #echo "vcf -> bcf "
   #bcftools view -Ou ${tmpdir}/${jobid}.vcf.gz > ${outdir}/${jobid}.bcf

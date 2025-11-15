@@ -11,7 +11,7 @@
 #SBATCH --account berglandlab_standard
 
 
-# ijob -A berglandlab -c10 -p standard --mem=50G
+# ijob -A berglandlab -c10 -p standard --mem=24G
 # sbatch --array=1-1002 ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/manual_scatter.sh
 # sacct -j 4287499 | grep -v "COMPLE"
 # cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.4243100_3.out
@@ -36,9 +36,9 @@ module load bedtools/2.30.0
   wd=/scratch/aob2x/14Nov2025_sim_dest3
   script_dir=~/DESTv3/snpCalling_dev
   pipeline_output=/scratch/aob2x/dest_v3_output
-  reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
-  focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile \
-  nJobs=5000
+  reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
+  focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
+  nJobs=2000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
 
 
@@ -47,9 +47,9 @@ module load bedtools/2.30.0
 
 ## working & temp directory
   outdir="${wd}/sub_vcfs" #### outdir=${wd}"/sub_vcfs"
-    if [ ! -d $outdir ]; then
-        mkdir $outdir
-    fi
+  if [ ! -d $outdir ]; then
+    mkdir $outdir
+  fi
 
 ## get list of SNYC files based on popSet & method & species
 ### full list
@@ -59,11 +59,14 @@ module load bedtools/2.30.0
   ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked"
 
 ### make Jobs file
-  Rscript makeJobs.R ${reference_genome}.fai ${focal_file} ${species} ${nJobs}
+  if [ ! -f ${reference_genome}.fai.${species}.${nJobs}.jobs ]; then
+    Rscript --vanilla ${script_dir}/scatter_gather_annotate/makeJobs.R ${reference_genome}.fai ${focalFile} ${species} ${nJobs}
+  fi
+  head ${reference_genome}.fai.${species}.${nJobs}.jobs
 
 ## get job
   #cat ${script_dir}/scatter_gather_annotate/jobs_genome.csv
-  job=$( cat ${script_dir}/scatter_gather_annotate/jobs_genome.csv | sed "${job}q;d" )
+  job=$( cat ${reference_genome}.fai.${species}.${nJobs}.jobs | sed "${job}q;d" )
   jobid=$( echo ${job} | sed 's/,/_/g' )
   echo "jobid is " $jobid
   echo "job is " $job
@@ -112,9 +115,6 @@ module load bedtools/2.30.0
     echo "PoolSNP" ${method}
     parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" | grep -v "DGN" ) ::: ${job} ::: ${tmpdir}
   fi
-
-
-
 
 ### paste function
   echo "paste"

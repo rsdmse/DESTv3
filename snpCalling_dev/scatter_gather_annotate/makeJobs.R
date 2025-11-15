@@ -39,4 +39,4 @@
   dim(wins)
 
 ### export
-  write.delim(wins, file=paste(fai.fn, species, nJobs, "jobs", sep="."), sep=",", quote=F, row.names=F, col.names=F)
+  write.table(wins, file=paste(fai.fn, species, nJobs, "jobs", sep="."), sep=",", quote=F, row.names=F, col.names=F)

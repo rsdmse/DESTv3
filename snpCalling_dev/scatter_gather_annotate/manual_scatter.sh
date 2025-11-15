@@ -29,7 +29,7 @@ module load bedtools/2.30.0
 ## Run params
   popSet=all
   method=SNAPE
-  species=mel
+  species=sim
   maf=001
   mac=50
   version=14Nov2025_sim
@@ -41,9 +41,8 @@ module load bedtools/2.30.0
   nJobs=2000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
 
-
-  #### popSet="all"; method="poolSNP"; maf="001"; mac=5; jobs="jobs.csv"; script_dir="/scratch/aob2x/DESTv2/snpCalling"; wd="/scratch/aob2x/DESTv2_output"; SLURM_JOB_ID=1;
-  #### pipeline_output="/project/berglandlab/DEST/dest_mapped/"; job="2L,1,10000"
+  #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
+  bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 
 ## working & temp directory
   outdir="${wd}/sub_vcfs" #### outdir=${wd}"/sub_vcfs"
@@ -51,12 +50,15 @@ module load bedtools/2.30.0
     mkdir $outdir
   fi
 
-## get list of SNYC files based on popSet & method & species
+## print names of sunc files
 ### full list
   echo "job: "${job}
   echo "pipeline_output: "${pipeline_output}
-  #echo $( ls -l ${pipeline_output}/*/*/*.sync.gz )
-  ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked"
+  cat $bamlist
+
+### make names
+  names=$( cat $bamlist | awk -F"/" '{print $NF}' | cut -f1 -d\. | tr '\n' ',' | sed 's/,$//g' )
+  echo $names
 
 ### make Jobs file
   if [ ! -f ${reference_genome}.fai.${species}.${nJobs}.jobs ]; then
@@ -104,21 +106,24 @@ module load bedtools/2.30.0
   }
   export -f subsection
 
-  echo "subset"
-  if [[ "${method}" == "SNAPE" && "${popSet}" == "PoolSeq" ]]; then
-    echo "SNAPE" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep "SNAPE" | grep "monomorphic" ) ::: ${job} ::: ${tmpdir}
-  elif [[ "${method}" == "PoolSNP" && "${popSet}" == "all" ]]; then
-    echo "PoolSNP" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" ) ::: ${job} ::: ${tmpdir}
-  elif [[ "${method}" == "PoolSNP" && "${popSet}" == "PoolSeq" ]]; then
-    echo "PoolSNP" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" | grep -v "DGN" ) ::: ${job} ::: ${tmpdir}
-  fi
+  #echo "subset"
+  #if [[ "${method}" == "SNAPE" && "${popSet}" == "PoolSeq" ]]; then
+  #  echo "SNAPE" ${method}
+  #  parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep "SNAPE" | grep "monomorphic" ) ::: ${job} ::: ${tmpdir}
+  #elif [[ "${method}" == "PoolSNP" && "${popSet}" == "all" ]]; then
+  #  echo "PoolSNP" ${method}
+  #  parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" ) ::: ${job} ::: ${tmpdir}
+  #elif [[ "${method}" == "PoolSNP" && "${popSet}" == "PoolSeq" ]]; then
+  #  echo "PoolSNP" ${method}
+  #  parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" | grep -v "DGN" ) ::: ${job} ::: ${tmpdir}
+  #fi
+
+  echo "Species: "${species}"; Method: "${method}
+  parallel -j 4 subsection ::: $( cat ${bamlist} ) ::: ${job} ::: ${tmpdir}
 
 ### paste function
   echo "paste"
-  Rscript --no-save --no-restore ${script_dir}/scatter_gather_annotate/paste.R ${job} ${tmpdir} ${method}
+  Rscript --no-save --no-restore ${script_dir}/scatter_gather_annotate/paste.R ${job} ${tmpdir} ${method} ${species}
 
 ### run through SNP calling
   echo "SNP calling"
@@ -134,7 +139,7 @@ module load bedtools/2.30.0
     --min-freq 0 \
     --posterior-prob 0.9 \
     --SNAPE \
-    --names $( cat ${tmpdir}/allpops.${method}.names |  tr '\n' ',' | sed 's/,$//g' )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
+    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
 
   elif [[ "${method}"=="PoolSNP" ]]; then
     echo $method
@@ -146,7 +151,7 @@ module load bedtools/2.30.0
     --min-count ${mac} \
     --min-freq 0.${maf} \
     --miss-frac 0.5 \
-    --names $( cat ${tmpdir}/allpops.${method}.names |  tr '\n' ',' | sed 's/,$//g' )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
+    --names $( echo ${names} )  > ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
   fi
 
 ### compress and clean up

@@ -4,11 +4,12 @@ args = commandArgs(trailingOnly=TRUE)
 job=args[1]
 tmpdir=args[2]
 method=args[3]
+species=args[4]
 
-#job="2L_1_137508"; tmpdir="/dev/shm/aob2x/1/"; method="PoolSNP"
-job=gsub("mitochondrion_genome", "mitochondrionGenome", job)
+#job="2L_1_60552"; tmpdir="/dev/shm/aob2x/5687770"; method="SNAPE"; species="sim"
+#job=gsub("mitochondrion_genome", "mitochondrionGenome", job)
 jobId=gsub(",", "_", job)
-jobId=gsub("mitochondrionGenome", "mitochondrion_genome", jobId)
+#jobId=gsub("mitochondrionGenome", "mitochondrion_genome", jobId)
 
 ### libraries
   library(data.table)
@@ -46,11 +47,11 @@ jobId=gsub("mitochondrionGenome", "mitochondrion_genome", jobId)
                         V3="N",
                         V4=".:.:.:.:.:.")
     }
-    tmp[,pop:=gsub("_$", "", gsub(jobId, "", files.i))]
+    tmp[,pop:=tstrsplit(gsub("_$", "", gsub(jobId, "", files.i)), "\\.")[[1]]]
     tmp
   }
   o <- rbindlist(o, use.names=T, fill=T)
-  o[,pop:=gsub(".SNAPE.monomorphic", "", pop)]
+  #o[,pop:=gsub(".SNAPE.monomorphic", "", pop)]
 
   dim(o)
   o[,.N,pop]
@@ -68,5 +69,5 @@ jobId=gsub("mitochondrionGenome", "mitochondrion_genome", jobId)
   owr <- merge(ow.ref, ow)
 
 ### output
-  write.table(owr, quote=F, row.names=F, col.names=F, sep="\t", file=paste(tmpdir, "/allpops.", method, ".sites", sep=""))
-  write.table(names(owr)[-c(1,2,3)], quote=F, row.names=F, col.names=F, sep="\t", file=paste(tmpdir, "/allpops.", method, ".names", sep=""))
+  write.table(owr, quote=F, row.names=F, col.names=F, sep="\t", file=paste(tmpdir, "/allpops.", method, ".", species, ".sites", sep=""))
+  write.table(names(owr)[-c(1,2,3)], quote=F, row.names=F, col.names=F, sep="\t", file=paste(tmpdir, "/allpops.", method, ".", species, ".names", sep=""))

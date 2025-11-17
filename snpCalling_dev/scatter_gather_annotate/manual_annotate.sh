@@ -19,71 +19,75 @@
 
 module purge
 
-module load htslib/1.17 bcftools/1.17 parallel/20200322 gcc/11.4.0 openmpi/4.1.4 R/4.3.1 samtools vcftools bedtools/2.30.0
-
-
+module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0
 
 popSet=all
-method=PoolSNP
+method=SNAPE
+species=sim
 maf=001
 mac=50
-version=29Sept2025_ExpEvo
-wd=/scratch/aob2x/compBio_SNP_29Sept2025
-script_dir=~/CompEvoBio_modules/utils/snpCalling/
-pipeline_output=/project/berglandlab/DEST/dest_mapped/
-
+version=14Nov2025_sim
+wd=/scratch/aob2x/14Nov2025_sim_dest3
+script_dir=~/DESTv3/snpCalling_dev
+pipeline_output=/scratch/aob2x/dest_v3_output
+reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
+focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
+nJobs=2000
+job=${SLURM_ARRAY_TASK_ID}    # job=1
+repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
+#ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
+bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
+snpEff_species=BDGP6.86
 snpEffPath=~/snpEff
 
+export popSet method species maf mac version wd script_dir pipeline_output reference_genome focalFile job repeatFile bamList
+
 cd ${wd}
+
+
+  bcf_outdir="${wd}/sub_bcf"
+  if [ ! -d $bcf_outdir ]; then
+      mkdir $bcf_outdir
+  fi
+export bcf_outdir
 
 echo "no rep & index"
 
   noRepIndex () {
-
-    popSet=all
-    method=PoolSNP
-    maf=001
-    mac=50
-    version=29Sept2025_ExpEvo
-    wd=/scratch/aob2x/compBio_SNP_29Sept2025
-    script_dir=~/CompEvoBio_modules/utils/snpCalling/
-    pipeline_output=/project/berglandlab/DEST/dest_mapped/
-    chr=${1} #chr=2L
-    bcf_outdir=${wd}/sub_bcf
-
+    chr=${1}
     bedtools intersect -sorted -v -header \
-    -b ${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz \
-    -a $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
+    -b ${repeatFile} \
+    -a ${bcf_outdir}/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
     bgzip -c > \
-    $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+    ${bcf_outdir}/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
-    bcftools index -f $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+    bcftools index -f ${bcf_outdir}/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
   }
   export -f noRepIndex
 
-  parallel -j5 noRepIndex ::: 2L 2R 3L 3R X
+  parallel -j5 noRepIndex ::: $( cat ${focalFile} | grep "${species}" | cut -f2 -d',' )
 
  echo "concat"
-   ls -d ${wd}/sub_bcf/dest.*.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz | grep -E "2L|2R|3L|3R|X" > \
+   ls -d ${wd}/sub_bcf/dest.${species}.*.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz | grep -E $( cat ${focalFile} | grep "${species}" | cut -f2 -d',' | tr '\n' '|' ) > \
    ${wd}/sub_bcf/vcf_order.genome
 
    bcftools concat \
    -f ${wd}/sub_bcf/vcf_order.genome \
    -O z \
    --threads 10 \
-   -o ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+   -o ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
-   tabix -p vcf ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+   tabix -p vcf ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
 
  echo "convert to vcf & annotate"
    bcftools view \
    --threads 48 \
-   ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz | \
+   ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz | \
    java -jar ~/snpEff/snpEff.jar \
    eff \
-   BDGP6.86 - > \
-   ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
+   ${snpEff_species} - > \
+   ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
 
 echo "make GDS"
    Rscript --vanilla ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/gds2vcf.R ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf

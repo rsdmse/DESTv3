@@ -11,12 +11,12 @@
 #SBATCH --account berglandlab
 
 ### sbatch ~/DESTv3/snpCalling_dev/scatter_gather_annotate/manual_gather.sh
-### sacct -j 5783915
-### cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.4393980_*.err
+### sacct -j 5783940
+### cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.5783940_1.err
 ### cat /scratch/aob2x/compBio_SNP_25Sept2023/logs/manual_gather
 ### cd /scratch/aob2x/compBio_SNP_25Sept2023
 
-module load htslib/1.17  bcftools/1.17 parallel/20200322 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16
+module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0
 
 concatVCF() {
 
@@ -80,14 +80,11 @@ concatVCF() {
 
   tabix -p vcf $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
-  bedtools intersect -sorted -v -header \
-  -b ${repeatFile} \
-  -a $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
-  bgzip -c > \
-  $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
 }
 export -f concatVCF
 
-parallel -j1 concatVCF ::: ${ cat ${focalFile} | grep "${species}" | cut -f2 -d','  }
+parallel -j1 concatVCF ::: $( cat ${focalFile} | grep "${species}" | cut -f2 -d',' )
+parallel -j1 concatVCF ::: sim_3R
+
 #parallel -j8 concatVCF ::: 3L

@@ -10,8 +10,8 @@
 #SBATCH -p standard
 #SBATCH --account berglandlab
 
-### sbatch ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/manual_gather.sh
-### sacct -j 4393980
+### sbatch ~/DESTv3/snpCalling_dev/scatter_gather_annotate/manual_gather.sh
+### sacct -j 5783915
 ### cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.4393980_*.err
 ### cat /scratch/aob2x/compBio_SNP_25Sept2023/logs/manual_gather
 ### cd /scratch/aob2x/compBio_SNP_25Sept2023
@@ -20,18 +20,25 @@ module load htslib/1.17  bcftools/1.17 parallel/20200322 gcc/11.4.0 openmpi/4.1.
 
 concatVCF() {
 
-
   popSet=all
-  method=PoolSNP
+  method=SNAPE
+  species=sim
   maf=001
   mac=50
-  version=29Sept2025_ExpEvo
-  wd=/scratch/aob2x/compBio_SNP_29Sept2025
-  script_dir=~/CompEvoBio_modules/utils/snpCalling/
-  pipeline_output=/project/berglandlab/DEST/dest_mapped/
+  version=14Nov2025_sim
+  wd=/scratch/aob2x/14Nov2025_sim_dest3
+  script_dir=~/DESTv3/snpCalling_dev
+  pipeline_output=/scratch/aob2x/dest_v3_output
+  reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
+  focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
+  nJobs=2000
+  job=${SLURM_ARRAY_TASK_ID}    # job=1
+  repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
+  #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
+  bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 
 
-  # chr=2L
+  # chr=sim_2L
 
   chr=${1}
 
@@ -50,9 +57,9 @@ concatVCF() {
   #> $outdir/vcfs_order.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort
 
 
-  ls -d ${outdir}/*.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz | \
+  ls -d ${outdir}/*.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz | \
   rev | cut -f1 -d '/' |rev | grep -E "^${chr}_" | sort -t"_" -k2n,2 -k4g,4 | \
-  sed "s|^|$outdir/|g" > $outdir/vcfs_order.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort
+  sed "s|^|$outdir/|g" > $outdir/vcfs_order.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort
 
   # less -S $outdir/vcfs_order.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort
 
@@ -60,27 +67,27 @@ concatVCF() {
   echo "Concatenating"
 
   bcftools concat \
-  -f $outdir/vcfs_order.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort \
+  -f $outdir/vcfs_order.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort \
   -O z \
   -n \
   --threads 48 \
-  -o $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
+  -o $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
   # vcf-concat \
   # -f $outdir/vcfs_order.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.sort \
   # -s | \
   # bgzip -c > $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
-  tabix -p vcf $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
+  tabix -p vcf $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
   bedtools intersect -sorted -v -header \
-  -b ${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz \
-  -a $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
+  -b ${repeatFile} \
+  -a $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
   bgzip -c > \
-  $bcf_outdir/dest.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
+  $bcf_outdir/dest.${species}.${chr}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
 
 }
 export -f concatVCF
 
-parallel -j1 concatVCF ::: 2L 2R 3L 3R 4 mitochondrion X Y
+parallel -j1 concatVCF ::: ${ cat ${focalFile} | grep "${species}" | cut -f2 -d','  }
 #parallel -j8 concatVCF ::: 3L

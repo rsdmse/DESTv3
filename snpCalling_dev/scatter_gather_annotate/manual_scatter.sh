@@ -11,9 +11,9 @@
 #SBATCH --account berglandlab_standard
 
 # ijob -A berglandlab -c10 -p standard --mem=24G
-# sbatch --array=1-1002 ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/manual_scatter.sh
-# sacct -j 4287499 | grep -v "COMPLE"
-# cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.4243100_3.out
+# sbatch --array=1-2000 /home/aob2x/DESTv3/snpCalling_dev/scatter_gather_annotate/manual_scatter.sh
+# sacct -j 5778813 | grep -v "COMPLE"
+# cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.5778813_23.out
 
 
 module purge
@@ -129,7 +129,7 @@ module load bedtools/2.30.0
 
   if [[ "${method}" == "SNAPE" ]]; then
     echo $method
-    cat ${tmpdir}/allpops.${method}.sites | python ${script_dir}/PoolSNP/PoolSnp.py \
+    cat ${tmpdir}/allpops.${method}.${species}.sites | python ${script_dir}/PoolSNP/PoolSnp.py \
     --sync - \
     --min-cov 4 \
     --max-cov 0.95 \
@@ -143,7 +143,7 @@ module load bedtools/2.30.0
   elif [[ "${method}"=="PoolSNP" ]]; then
     echo $method
 
-    cat ${tmpdir}/allpops.${method}.sites | python ${script_dir}/PoolSNP/PoolSnp.py \
+    cat ${tmpdir}/allpops.${method}.${species}.sites | python ${script_dir}/PoolSNP/PoolSnp.py \
     --sync - \
     --min-cov 4 \
     --max-cov 0.95 \

@@ -15,11 +15,11 @@
 ### sbatch ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/manual_annotate.sh
 ### sacct -j 4425471
 ### cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_annotate.4425471*.err
-# # ijob -A biol4559-aob2x -c10 -p largemem --mem=40G
+# # ijob -A berglandlab_standard -c10 -p standard --mem=40G
 
 module purge
 
-module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0
+module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0 R/4.3.1
 
 popSet=all
 method=SNAPE
@@ -37,7 +37,7 @@ job=${SLURM_ARRAY_TASK_ID}    # job=1
 repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
 #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
-snpEff_species=BDGP6.86
+snpEff_species=Dsim_v3.1
 snpEffPath=~/snpEff
 
 export popSet method species maf mac version wd script_dir pipeline_output reference_genome focalFile job repeatFile bamList

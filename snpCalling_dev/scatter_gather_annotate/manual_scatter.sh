@@ -31,8 +31,8 @@ module load bedtools/2.30.0
   species=sim
   maf=001
   mac=50
-  version=14Nov2025_sim
-  wd=/scratch/aob2x/14Nov2025_sim_dest3
+  version=20Nov2025_sim
+  wd=/scratch/aob2x/20Nov2025_sim_dest3
   script_dir=~/DESTv3/snpCalling_dev
   pipeline_output=/scratch/aob2x/dest_v3_output
   reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
@@ -40,8 +40,8 @@ module load bedtools/2.30.0
   nJobs=2000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
   repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
-  #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
-  bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
+  #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/sim_snape.bamlist
+  bamlist=/scratch/aob2x/sim_snape.bamlist
 
 ## working & temp directory
   outdir="${wd}/sub_vcfs" #### outdir=${wd}"/sub_vcfs"
@@ -155,23 +155,9 @@ module load bedtools/2.30.0
 
 ### compress and clean up
   echo "compress and clean"
-  # cp ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf
-  # cat ${tmpdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf | bgzip -c > ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
   cat ${tmpdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf | vcf-sort | bgzip -c > ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
 
   tabix -p vcf ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz
-
-### remove repeats
-  #bedtools intersect -sorted -v -header \
-  #-b ${repeatFile} \
-  #-a ${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.vcf.gz |
-  #bgzip -c > \
-  #${outdir}/${jobid}.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
-
-  #tabix -p vcf ${outdir}/${jobid}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz
-
-  #echo "vcf -> bcf "
-  #bcftools view -Ou ${tmpdir}/${jobid}.vcf.gz > ${outdir}/${jobid}.bcf
 
   rm -fr ${tmpdir} # used bash exit trap instead (line 6)
 

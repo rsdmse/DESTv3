@@ -11,7 +11,7 @@ module load gcc/11.4.0  openmpi/4.1.4 python/3.11.4
 
 #module load htslib bcftools parallel intel/18.0 intelmpi/18.0 mvapich2/2.3.1 R/3.6.3 python/3.6.6 vcftools/0.1.16
 #module load htslib/1.10.2 bcftools/1.9 parallel/20200322 intel/18.0 intelmpi/18.0 R/3.6.3 python/3.6.6 vcftools/0.1.16
-module load htslib/1.17  bcftools/1.17 parallel/20200322 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 vcftools/0.1.16 R/4.3.1
+module load htslib/1.17 bcftools/1.17 parallel/20250722 vcftools/0.1.16 R/4.3.1
 module load bedtools/2.30.0
 
 ### r, mvapch, parallel
@@ -42,7 +42,7 @@ module load bedtools/2.30.0
 ### full list
   echo "foo: "${9}
   echo "pipeline_output: "${pipeline_output}
-  echo $( ls ${pipeline_output}/*/*/*.sync.gz )
+  echo $( ls ${pipeline_output}/*/*.sync.gz )
 
 ## get job
   cat ${wd}/jobs.csv
@@ -85,13 +85,13 @@ module load bedtools/2.30.0
   echo "subset" 
   if [[ "${method}" == "SNAPE" && "${popSet}" == "PoolSeq" ]]; then
     echo "SNAPE" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep "SNAPE" | grep "monomorphic" ) ::: ${job} ::: ${tmpdir}
+    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*.masked.sync.gz | tr '  ' '\n' | grep "SNAPE" | grep "monomorphic" ) ::: ${job} ::: ${tmpdir}
   elif [[ "${method}" == "PoolSNP" && "${popSet}" == "all" ]]; then
     echo "PoolSNP" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" ) ::: ${job} ::: ${tmpdir}
+    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" ) ::: ${job} ::: ${tmpdir}
   elif [[ "${method}" == "PoolSNP" && "${popSet}" == "PoolSeq" ]]; then
     echo "PoolSNP" ${method}
-    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" | grep -v "DGN" ) ::: ${job} ::: ${tmpdir}
+    parallel -j 4 subsection ::: $( ls ${pipeline_output}/*/*.masked.sync.gz | tr '  ' '\n' | grep -v "SNAPE" | grep -v "DGN" ) ::: ${job} ::: ${tmpdir}
   fi
 
 

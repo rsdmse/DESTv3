@@ -1,0 +1,28 @@
+executor: cluster-generic
+cluster-generic-submit-cmd:
+  sbatch
+    --account=hpc_build  
+    --partition=standard
+    --output={resources.log_dir}/{rule}.%A.out
+    --error={resources.log_dir}/{rule}.%A.err
+    --job-name={rule}
+    --ntasks-per-node={resources.ntasks_per_node}
+    --nodes=1
+    --time={resources.time_limit}
+    --mem={resources.memory_limit}G
+    --parsable
+cluster-generic-status-cmd: ~/Bergland/DESTv3/snpCalling/slurm/slurm_job_status.sh
+default-resources: 
+  - ntasks_per_node=4 
+  - memory_limit=48 
+  - time_limit=180
+jobs: 100
+keep-going: True
+retries: 3
+rerun-incomplete: True
+show-failed-logs: True
+#printshellcmds: True
+
+
+ 
+

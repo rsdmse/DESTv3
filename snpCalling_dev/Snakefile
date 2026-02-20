@@ -1,0 +1,119 @@
+from math import floor, ceil
+from pathlib import Path
+from glob import glob
+import os
+import glob
+import subprocess
+
+configfile: "workflow.yaml"
+
+wd = Path(config["working_directory"])
+sd = Path(config["script_directory"])
+nJobs = config["nJobs"]
+focalFile = config["focalFile"]
+cf_species = config["species"]
+cf_method = config["method"]
+
+poolseq_path = config["pipeline_output"]
+input_sync_files = glob.glob(poolseq_path)
+
+log_dir = wd / "logs"
+if not log_dir.exists():
+    log_dir.mkdir()
+
+# create jobs file or get it from config
+if config["jobs_file"] == "NA":
+    ### make Jobs file 
+    #print("\nMaking jobs file...\n")
+    ref_genome_fai = config["reference_genome"] + ".fai"
+    cmd = [
+    "Rscript",
+    "--vanilla",
+    "scatter_gather_annotate/makeJobs.R",
+    ref_genome_fai,
+    focalFile,
+    cf_species,
+    str(nJobs)
+    ]
+    subprocess.run(cmd, check=True)
+    job_file_path_storage = ref_genome_fai + "." + cf_species + "." + str(nJobs) + ".jobs"
+else:
+    job_file_path_storage = config["jobs_file"]
+
+subprocess.run(["head", job_file_path_storage], check=True)
+job_file_path = wd / "jobs.csv"
+subprocess.run(["cp", job_file_path_storage, job_file_path], check=True)
+
+# create CHRS var
+#print("\nCreating CHRS variable...\n")
+CHRS = []
+with open(focalFile) as f:
+    for line in f:
+        if cf_species in line:
+            CHRS.append(line.split(",")[1].strip())
+#print(CHRS)
+
+# create bam list or get it from config
+if config["bamlist"] == "NA":
+    # make bamlist file
+    #print("\nMaking bamlist file...\n")
+    bamlist_path_local = "scatter_gather_annotate/" + cf_species + "_" + cf_method + ".bamlist"
+    blist = glob.glob(poolseq_path + "/*/*" + cf_species + "." + cf_method + "*.sync.gz")
+    blist.sort()    
+    blist = [f for f in blist if "complete" not in f]
+    blist = [f for f in blist if "masked" in f]
+    with open(bamlist_path_local, "w") as f:
+        for f_name in blist:
+            f.write(f_name + "\n")
+else:
+    bamlist_path_local = config["bamlist"]
+
+subprocess.run(["head", bamlist_path_local], check=True)
+bamlist_file_name = cf_species + "_" + cf_method + ".bamlist"
+bamlist_path = wd / bamlist_file_name
+subprocess.run(["cp", bamlist_path_local, bamlist_path], check=True)
+
+rule all:
+    input:
+        expand("{wd}/dest.{species}.{popset}.{method}.{maf}.{mac}.{version}.norep.ann.vcf.gz", \
+                wd=config["working_directory"], \
+                species=config["species"], \
+                popset=config["popSet"], \
+                method=config["method"], \
+                maf=config["maf"], \
+                mac=config["mac"], \
+                version=config["version"])
+
+rule runSNP_calling:
+    input:
+        job_file=job_file_path,
+        bamlist_file = bamlist_path, 
+        input_files=input_sync_files
+    output:
+        expand("{wd}/sub_vcfs/{{jobid}}.{{species}}.{{popset}}.{{method}}.{{maf}}.{{mac}}.{{version}}.vcf.gz", wd=config['working_directory'])
+    resources:
+        log_dir=str(log_dir)
+    shell : "bash scatter_gather_annotate/scatter.sh {config[popSet]} {config[method]} {config[species]} {config[maf]} {config[mac]} {config[version]} {config[working_directory]} {config[script_directory]}  {config[pipeline_output]} {wildcards.jobid} {input.bamlist_file}"
+   
+def get_files_to_gather(wildcards):
+    job_ids = open(job_file_path).readlines()
+    job_ids = [i.strip().replace(",", "_") for i in job_ids if i.strip() != ""]
+    return [f"{config['working_directory']}/sub_vcfs/{job_id}.{wildcards.species}.{wildcards.popSet}.{wildcards.method}.{wildcards.maf}.{wildcards.mac}.{wildcards.version}.vcf.gz" for job_id in job_ids if job_id.startswith(wildcards.chr)]   
+   
+rule gatherPoolSnp:
+    input:
+        get_files_to_gather
+    output:
+        expand("{wd}/sub_bcf/dest.{{species}}.{{chr}}.{{popSet}}.{{method}}.{{maf}}.{{mac}}.{{version}}.vcf.gz", wd=config['working_directory'])
+    resources:
+        log_dir=str(log_dir), ntasks_per_node=48, time_limit=60, memory_limit=20
+    shell:  "bash scatter_gather_annotate/gather.sh {config[popSet]} {config[method]} {config[species]} {config[maf]} {config[mac]} {config[version]} {config[working_directory]} {wildcards.chr}"
+
+rule annotate:
+    input:
+        expand("{wd}/sub_bcf/dest.{{species}}.{chr}.{{popset}}.{{method}}.{{maf}}.{{mac}}.{{version}}.vcf.gz", wd=config['working_directory'], chr=CHRS)
+    output:
+        expand("{wd}/dest.{{species}}.{{popset}}.{{method}}.{{maf}}.{{mac}}.{{version}}.norep.ann.vcf.gz", wd=config["working_directory"])
+    resources:
+        log_dir=str(log_dir), ntasks_per_node=48, time_limit=1440, memory_limit=40
+    shell:  "bash scatter_gather_annotate/annotate.sh {config[popSet]} {config[method]} {config[species]} {config[maf]} {config[mac]} {config[version]} {config[working_directory]} {config[snpEff_path]} {config[focalFile]} {config[script_directory]} {config[snpEff_species]}"

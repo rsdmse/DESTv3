@@ -10,10 +10,16 @@
   library(foreach)
 
 ### load data
-  #fai.fn="/Users/alanbergland/Documents/GitHub/DESTv3/snpCalling_dev/scatter_gather_annotate/holo_dmel_6.12.fa.fai"
-  #focalFile.fn="/Users/alanbergland/Documents/GitHub/DESTv3/examples/mapping/focalFile"
-  #species <- "mel"
-  #nJobs <- 5000
+  #fai.fn="/home/kjl5t/Bergland/DESTv3/snpCalling_dev/scatter_gather_annotate/holo_dmel_6.12.fa.fai"
+  #focalFile.fn="/home/kjl5t/Bergland/DESTv3/examples/mapping/focalFile"
+#  species <- "mel"
+#  nJobs <- 5000
+
+  #fai.fn="/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa.fai"
+  #focalFile.fn="/home/kjl5t/Bergland/DESTv3/examples/mapping/focalFile"
+  #species <- "sim"
+  #nJobs <- 2000
+
   print(fai.fn)
   print(focalFile.fn)
 
@@ -26,7 +32,7 @@
   use <- use[!is.na(V2)]
   use[,cLen:=cumsum(V2)]
   use[,pLen:=V2/max(cLen)]
-  use[,nJobs_chr:=floor(nJobs*pLen)]
+  use[,nJobs_chr:=ceiling(nJobs*pLen)]
   sum(use$nJobs_chr)
 
 ### iterate across chromosomes
@@ -40,3 +46,4 @@
 
 ### export
   write.table(wins, file=paste(fai.fn, species, nJobs, "jobs", sep="."), sep=",", quote=F, row.names=F, col.names=F)
+

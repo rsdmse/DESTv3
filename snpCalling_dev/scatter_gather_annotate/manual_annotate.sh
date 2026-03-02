@@ -26,15 +26,15 @@ method=SNAPE
 species=sim
 maf=001
 mac=50
-version=14Nov2025_sim
-wd=/scratch/aob2x/14Nov2025_sim_dest3
+version=20Nov2025_sim
+wd=/scratch/aob2x/${version}_dest3
 script_dir=~/DESTv3/snpCalling_dev
 pipeline_output=/scratch/aob2x/dest_v3_output
 reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
 focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
 nJobs=2000
 job=${SLURM_ARRAY_TASK_ID}    # job=1
-repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
+repeatFile=~/DESTv2-SNAPE/analysis/simulans/dsim_destv3_mapping/repeat_dylan/dsim_v3_cat.rename.bed
 #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 bamlist=/scratch/aob2x/14Nov2025_sim_dest3/sim_snape.bamlist
 snpEff_species=Dsim_v3.1

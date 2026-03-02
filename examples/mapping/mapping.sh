@@ -23,23 +23,6 @@ module load apptainer/1.3.4
 ### prep reference genome
  singularity run \
  /scratch/aob2x/dest_v3.sif  \
- /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_1.fastq.gz \
- /project/berglandlab/DEST/raw_reads/DrosEU_3_Jan2023/DrosEu-194_2.fastq.gz \
- DE_Bad_Bro_1_2020-07-16 \
- /scratch/aob2x/dest_v3_output/ \
- --reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
- --focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
- --prep_reference 0 \
- --do_map 0 \
- --do_pileup 0 \
- --do_poolsnp 0 \
- --do_snape 0 \
- --do_cleanup 0
-
-
-
- singularity run \
- /scratch/aob2x/dest_v3.sif  \
  --reference_genome /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa \
  --focal_file /home/aob2x/DESTv3/examples/mapping/focalFile \
  --prep_reference 1 \

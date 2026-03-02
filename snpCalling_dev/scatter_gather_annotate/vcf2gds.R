@@ -6,13 +6,16 @@ library(SeqArray)
 
 args = commandArgs(trailingOnly=TRUE)
 vcf.fn=args[[1]]
+nCores=as.numeric(args[[2]])
+
 gds.fn=gsub(".vcf", ".gds", vcf.fn)
+gds.fn=gsub(".gz", "", gds.fn)
 
 #vcf.fn=paste(vcf.fn, ".gz", sep="")
 #vcf.fn="/standard/BerglandTeach/mtDNA/mtDNA.ann.vcf"
-seqParallelSetup(cluster=10, verbose=TRUE)
+seqParallelSetup(cluster=nCores, verbose=TRUE)
 
-seqVCF2GDS(vcf.fn, gds.fn, storage.option="ZIP_RA", parallel=5, verbose=T, optimize=T)
+seqVCF2GDS(vcf.fn, gds.fn, storage.option="ZIP_RA", parallel=nCores, verbose=T, optimize=T)
 
 
 

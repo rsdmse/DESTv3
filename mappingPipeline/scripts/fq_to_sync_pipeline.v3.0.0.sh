@@ -532,18 +532,19 @@ check_exit_status () {
       prefix=$( echo $1 | cut -f1 -d',')
       chr=$( echo $1 | cut -f2 -d',')
 
-      # prefix=sim; chr=sim_2L
-      # output=/scratch/aob2x/dest_v3_output
-      # sample=DE_Bad_Bro_1_2020-07-16
-      # chr=sim_mtDNA
-      # prefix=sim
-      # min_cov=4
-      # max_cov=.95
-      # maxsnape=.9
-      # ref=/scratch/aob2x/tmpRef/holo_dmel_6.12.fa
-      # minIndel=5
-      # illumina_quality_coding=1.8
-      # base_quality_threshold=25
+      ### do not run
+        #singularity shell ~/dest_v3.sif
+        #prefix=euroPerch; chr=NC_053112.1
+        #output=/scratch/aob2x/euroPerch/output
+        #sample=B006308_2_Heisri_Mustjarv_S9
+        #prefix=euroPerch
+        #min_cov=4
+        #max_cov=.95
+        #maxsnape=.9
+        #ref=/scratch/aob2x/euroPerch/refGenome/GCF_010015445.1_GENO_Pfluv_1.0_genomic.fa
+        #minIndel=5
+        #illumina_quality_coding=1.8
+        #base_quality_threshold=25
 
       picklesDir=$( echo $ref | awk -F'/' '{ for(i=1; i<NF; i++) printf $i"/"; printf "pickles"}' )
       refStem=$( echo $ref | awk -F'/' '{print $NF}' )

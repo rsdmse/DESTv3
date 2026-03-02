@@ -86,11 +86,11 @@ echo "no rep & index"
    ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.vcf.gz | \
    java -jar ~/snpEff/snpEff.jar \
    eff \
-   ${snpEff_species} - > \
+   ${snpEff_species} -  > \
    ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
 
 echo "make GDS"
-   Rscript --vanilla ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/gds2vcf.R ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
+   Rscript --vanilla ~/CompEvoBio_modules/utils/snpCalling/scatter_gather_annotate/gds2vcf.R ${wd}/dest.${species}.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
 
 echo "bgzip & tabix"
   bgzip -@10 -c ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf > ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf.gz

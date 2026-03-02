@@ -12,7 +12,7 @@
 
 # ijob -A berglandlab -c10 -p standard --mem=24G
 # sbatch --array=1-2000 /home/aob2x/DESTv3/snpCalling_dev/scatter_gather_annotate/manual_scatter.sh
-# sacct -j 5779304 | grep -v "COMPLE"
+# sacct -j 5929492 | grep -v "COMPLE"
 # cat /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.5778813_23.out
 
 
@@ -32,7 +32,7 @@ module load bedtools/2.30.0
   maf=001
   mac=50
   version=20Nov2025_sim
-  wd=/scratch/aob2x/20Nov2025_sim_dest3
+  wd=/scratch/aob2x/${version}_sim_dest3
   script_dir=~/DESTv3/snpCalling_dev
   pipeline_output=/scratch/aob2x/dest_v3_output
   reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa

@@ -6,13 +6,14 @@ library(SeqArray)
 
 args = commandArgs(trailingOnly=TRUE)
 vcf.fn=args[[1]]
+nCores=as.numeric(args[[2]])
 gds.fn=gsub(".vcf", ".gds", vcf.fn)
-
+gds.fun=gsub(".gz", "", gds.fn)
 #vcf.fn=paste(vcf.fn, ".gz", sep="")
 #vcf.fn="/scratch/aob2x/14Nov2025_sim_dest3/dest.sim.all.SNAPE.001.50.14Nov2025_sim.norep.ann.vcf"
-seqParallelSetup(cluster=10, verbose=TRUE)
+seqParallelSetup(cluster=nCores, verbose=TRUE)
 
-seqVCF2GDS(vcf.fn, gds.fn, storage.option="ZIP_RA", parallel=10, verbose=T, optimize=T)
+seqVCF2GDS(vcf.fn, gds.fn, storage.option="ZIP_RA", parallel=nCores, verbose=T, optimize=T)
 
 
 

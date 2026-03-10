@@ -26,7 +26,7 @@ module load bedtools/2.30.0
   script_dir=${8}
   pipeline_output=${9}
   jobid=${10}
-  job=$( echo $jobid | sed 's/_/,/g')
+  job=$( echo $jobid | sed 's/\(.*\)_/\1,/; s/\(.*\)_/\1,/')  # replace last two "_" with ","
   bamlist=${11}    # new param
 
 ## working & temp directory

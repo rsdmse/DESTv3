@@ -34,6 +34,7 @@ mac=${4}
 version=${5}
 wd=${6}
 snpEffPath=${7}
+script_dir=${8}
 
 cd ${wd}
 
@@ -60,7 +61,7 @@ echo "convert to vcf & annotate"
   ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
 
 echo "make GDS"
-  Rscript --vanilla /home/kjl5t/Bergland/snpCalling_v2/snpCalling/scatter_gather_annotate/vcf2gds.R ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
+  Rscript --vanilla ${script_dir}/scatter_gather_annotate/vcf2gds.R ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf
 
 echo "bgzip & tabix"
  bgzip -@20 -c ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf > ${wd}/dest.${popSet}.${method}.${maf}.${mac}.${version}.norep.ann.vcf.gz

@@ -24,7 +24,7 @@ module load bedtools/2.30.0
   mac=${4}
   version=${5}
   jobid=${6}
-  job=$( echo $jobid | sed 's/_/,/g')
+  job=$( echo $jobid | sed 's/\(.*\)_/\1,/; s/\(.*\)_/\1,/')  # replace last two "_" with ","
   script_dir=${7}
   wd=${8}
   pipeline_output=${9}

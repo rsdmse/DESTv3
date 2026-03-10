@@ -1,13 +1,13 @@
 #To run the example, exchange '/scratch/jho5ze/DEST_snakemake with your path to the DEST_freeze1 in all relevant lines below'
 
 script_directory: /home/kjl5t/DAC/Bergland/DESTv3/snpCalling_dev #Location of the snpCalling scripts (from git repo)
-working_directory: /scratch/kjl5t/flex_test_DESTv3 #Directory where all the data will be processed and where output will be written
-pipeline_output: /scratch/kjl5t/dest_v3_output #/project/berglandlab/DEST/dest_mapped/pipeline_output #Directory holding the masked SYNC files from the main pipeline output -- NEED THIS
+working_directory: /scratch/kjl5t/flex_test_DESTv4 #Directory where all the data will be processed and where output will be written
+pipeline_output: /scratch/kjl5t/dest_v3_output_subset #/project/berglandlab/DEST/dest_mapped/pipeline_output #Directory holding the masked SYNC files from the main pipeline output -- NEED THIS
 popSet: all #Population to use: "all" or "PoolSeq"
 method: SNAPE #Method to use for variant calling: "PoolSNP" or "SNAPE"; SNAPE only works for PoolSeq
 maf: 001 #Minimum allele frequency (only used with PoolSNP method) "001" for PO
 mac: 50 #50 #Minmum allele count (only used with PoolSNP method)
-version: 20Feb2026_DACtest
+version: 02Mar2026_DACtest
 #poolsnp_jobs: 999 #Number of jobs to break the run_poolsnp.sh step into
 snpEff_path: ~/snpEff #Where to find the .jar for snpEff and the config file to use
 jobs_file: NA #path to filename, if NA it will run the full genome automatically. If premade, put it in the working directory
@@ -15,6 +15,6 @@ jobs_file: NA #path to filename, if NA it will run the full genome automatically
 species: sim
 reference_genome: /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
 focalFile: /home/kjl5t/DAC/Bergland/DESTv3/examples/mapping/focalFile
-nJobs: 2000 #Number of jobs to break the run_poolsnp.sh step into
+nJobs: 100 #Number of jobs to break the run_poolsnp.sh step into
 bamlist: NA # If premade, will get put in the working directory during pipeline run
 snpEff_species: Dsim_v3.1

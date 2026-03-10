@@ -11,16 +11,18 @@ cluster-generic-submit-cmd:
     --time={resources.time_limit}
     --mem={resources.memory_limit}G
     --parsable
-cluster-generic-status-cmd: ~/Bergland/DESTv3/snpCalling/slurm/slurm_job_status.sh
+cluster-generic-status-cmd: ~/DAC/Bergland/DESTv3/snpCalling/slurm/slurm_job_status.sh
 default-resources: 
   - ntasks_per_node=4 
   - memory_limit=48 
   - time_limit=180
+scheduler: greedy
 jobs: 100
 keep-going: True
 retries: 3
 rerun-incomplete: True
 show-failed-logs: True
+latency-wait: 20
 #printshellcmds: True
 
 

@@ -5,10 +5,10 @@
 #SBATCH -N 1 # on one node
 #SBATCH -t 4:00:00 ### 1 hours
 #SBATCH --mem 64G
-#SBATCH -o /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.%A_%a.out # Standard output
-#SBATCH -e /scratch/aob2x/29Sept2025_ExpEvo/logs/manual_gather.%A_%a.err # Standard error
+#SBATCH -o /scratch/kjl5t/manual_test/logs/manual_scatter.%A_%a.out # Standard output
+#SBATCH -e /scratch/kjl5t/manual_test/logs/manual_scatter.%A_%a.err # Standard error
 #SBATCH -p standard
-#SBATCH --account berglandlab_standard
+#SBATCH --account hpc_build
 
 # ijob -A berglandlab -c10 -p standard --mem=24G
 # sbatch --array=1-2000 /home/aob2x/DESTv3/snpCalling_dev/scatter_gather_annotate/manual_scatter.sh
@@ -31,17 +31,17 @@ module load bedtools/2.30.0
   species=sim
   maf=001
   mac=50
-  version=20Nov2025_sim
-  wd=/scratch/aob2x/20Nov2025_sim_dest3
-  script_dir=~/DESTv3/snpCalling_dev
-  pipeline_output=/scratch/aob2x/dest_v3_output
+  version=02Mar2026_sim #20Nov2025_sim
+  wd=/scratch/kjl5t/02Mar2026_sim_dest3 #/scratch/aob2x/20Nov2025_sim_dest3
+  script_dir=~/DAC/Bergland/DESTv3/snpCalling_dev #~/DESTv3/snpCalling_dev
+  pipeline_output=/scratch/kjl5t/dest_v3_output_subset #/scratch/aob2x/dest_v3_output
   reference_genome=/project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
-  focalFile=/home/aob2x/DESTv3/examples/mapping/focalFile
-  nJobs=2000
+  focalFile=/home/kjl5t/DAC/Bergland/DESTv3/examples/mapping/focalFile #/home/aob2x/DESTv3/examples/mapping/focalFile
+  nJobs=100 #2000
   job=${SLURM_ARRAY_TASK_ID}    # job=1
   repeatFile=${script_dir}/scatter_gather_annotate/repeat_bed/repeats.sort.bed.gz
   #ls -d ${pipeline_output}/*/*${species}.${method}*.sync.gz | grep -v "complete" | grep "masked" > /scratch/aob2x/sim_snape.bamlist
-  bamlist=/scratch/aob2x/sim_snape.bamlist
+  bamlist=/scratch/kjl5t/sim_snape_subset.bamlist #/scratch/aob2x/sim_snape.bamlist
 
 ## working & temp directory
   outdir="${wd}/sub_vcfs" #### outdir=${wd}"/sub_vcfs"

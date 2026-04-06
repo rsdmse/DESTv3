@@ -1,0 +1,27 @@
+# Workflow variables by method - poolsnp, SNAPE, freebayes
+# NOTE - THE METHOD FIELD IS CASE SENSITIVE.  NEEDED TO MATCH FILENAMES IN THE PIPELINE OUTPUT.
+
+# All Methods
+working_directory: /scratch/kjl5t/all_test_v3 #Directory where all the data will be processed and where output will be written
+pipeline_output: /scratch/kjl5t/dest_v3_output_subset #/project/berglandlab/DEST/dest_mapped/pipeline_output #Directory holding the masked SYNC files from the main pipeline output -- NEED THIS
+method: SNAPE #Method to use for variant calling: "freebayes", "poolsnp" or "SNAPE"; SNAPE only works for PoolSeq
+version: 06Apr2026_DACtest
+jobs_file: NA #path to filename, if NA it will run the full genome automatically. If premade, put it in the working directory
+species: sim
+reference_genome: /project/berglandlab/Dmel_genomic_resources/References/DESTv3_dmelholo/holo.dmel_6.54.dsim_3.1.dest3.fa
+focalFile: /home/kjl5t/DAC/Bergland/DESTv3/examples/mapping/focalFile
+
+# PoolSNP or SNAPE only
+script_directory: /home/kjl5t/DAC/Bergland/DESTv3/snpCalling_dev_all #Location of the snpCalling scripts (from git repo)
+popSet: all #Population to use: "all" or "PoolSeq"
+maf: 001 #Minimum allele frequency (only used with PoolSNP method) "001" for PO
+mac: 50 #50 #Minmum allele count (only used with PoolSNP method)
+nJobs: 100 #Number of jobs to break the run_poolsnp.sh step into
+bamlist: NA # If premade, will get put in the working directory during pipeline run
+snpEff_path: ~/snpEff #Where to find the .jar for snpEff and the config file to use
+snpEff_species: Dsim_v3.1
+
+# FreeBayes only
+chunk_size: 1000000
+lag: 0 
+

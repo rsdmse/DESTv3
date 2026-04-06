@@ -1,0 +1,239 @@
+from math import floor, ceil
+from pathlib import Path
+from glob import glob
+import os
+import glob
+import subprocess
+
+configfile: "workflow.yaml"
+
+WD_PATH = Path(config["working_directory"])
+WD = config["working_directory"]
+FOCAL_FILE = config["focalFile"]
+SPECIES = config["species"]
+METHOD = config["method"]
+REF = config["reference_genome"]
+POOLSEQ_PATH = config["pipeline_output"]
+VERSION = config["version"]
+CHUNK_SIZE = config["chunk_size"]
+LAG = config["lag"]
+
+SAMPLES = sorted(glob_wildcards(f"{POOLSEQ_PATH}/{{sample}}/{{sample}}.{SPECIES}.bam").sample)
+print(SAMPLES)
+
+log_dir = WD_PATH / "logs"
+if not log_dir.exists():
+    log_dir.mkdir()
+
+############################################
+# Generate genome chunks from REF file - produces genome_chunks.txt (jobs file) 
+############################################
+
+CHRS = []
+with open(FOCAL_FILE) as f:
+    for line in f:
+        if SPECIES in line:
+            CHRS.append(line.split(",")[1].strip())
+
+# create jobs file or get it from config
+if config["jobs_file"] == "NA":
+    ### make Jobs file 
+    
+    ref_genome_fai = REF + ".fai"
+
+    # subset to species
+    subset_fai = "subset.fai"
+    with open(ref_genome_fai) as fai, open(subset_fai, "w") as out:
+        for line in fai:
+            if line.split()[0] in CHRS:
+                out.write(line)
+
+    with open("genome_chunks.txt", "w") as outfile:
+        subprocess.run(
+            [
+                "awk",
+                "-v", f"chunk_size={CHUNK_SIZE}",
+                "-v", f"lag={LAG}",
+                "-f", "freebayes/generate_chunk_fromfai.awk",
+                subset_fai
+            ],
+            stdout=outfile,
+            check=True
+        )
+
+    job_file_path_storage = "genome_chunks.txt"
+else:
+    job_file_path_storage = config["jobs_file"]
+
+subprocess.run(["head", job_file_path_storage], check=True)
+job_file_path = WD_PATH / "jobs.csv"
+subprocess.run(["cp", job_file_path_storage, job_file_path], check=True)
+
+'''
+############################################
+# create bam list or get it from config - not needed for pipeline...rg_bamlist built within pipeline
+############################################
+
+if config["bamlist"] == "NA":
+    # make bamlist file
+    bamlist_path_local = SPECIES + "_" + METHOD + ".bamlist"
+    blist = glob.glob(POOLSEQ_PATH + "/*/*" + SPECIES + ".bam")
+    blist.sort()    
+    with open(bamlist_path_local, "w") as f:
+        for f_name in blist:
+            f.write(f_name + "\n")
+else:
+    bamlist_path_local = config["bamlist"]
+
+subprocess.run(["head", bamlist_path_local], check=True)
+bamlist_file_name = SPECIES + "_" + METHOD + ".bamlist"
+bamlist_path = WD_PATH / bamlist_file_name
+subprocess.run(["cp", bamlist_path_local, bamlist_path], check=True)
+'''
+
+############################################
+# Utility functions
+############################################
+
+def region_to_safe(region):
+    # Region name to filename: ex) chr2L:1-1000000 to chr2L__1_1000000.  
+    # Edge Case - only one chunk for a chromosome: ex) dsim_mitochondrion_genome stays unchanged 
+    parts = region.split(":")
+    if len(parts) == 2:
+        chrom, rest = parts
+        start, end = rest.split("-")
+        safe_str = f"{chrom}__{start}_{end}"
+    else:
+        safe_str = region
+    return safe_str
+
+def safe_to_region(safe):
+    # Filename to region name: ex) chr2L__1_1000000 to chr2L:1-1000000 
+    # Edge Case - only one chunk for a chromosome: ex) dsim_mitochondrion_genome stays unchanged
+    parts = safe.split("__")
+    if len(parts) == 2:
+        chrom, coords = parts
+        start, end = coords.split("_")
+        region_str = f"{chrom}:{start}-{end}"
+    else:
+        region_str = safe
+    return region_str
+
+# ############################################
+# RULES
+# ############################################
+
+rule all:
+    input:
+        # Final output: concatenated and ordered VCF
+        WD + "/dest." + SPECIES + "." + METHOD + "." + VERSION + ".vcf.gz"
+
+# Rule 1: Process BAM files - add read groups
+# Note: samtools addreplacerg does NOT support multithreading.  samtools index does but only for (de)compression.
+rule add_readgroups:
+    input:
+        POOLSEQ_PATH + "/{sample}/{sample}." + SPECIES + ".bam"
+    output:
+        bam=WD + "/rg_bams/{sample}." + SPECIES + ".smrgmod.bam",
+        bai=WD + "/rg_bams/{sample}." + SPECIES + ".smrgmod.bam.bai"
+    threads: 1
+    resources:
+        log_dir=str(log_dir), time_limit=60, memory_limit=16
+    shell:
+        """
+        module load samtools/1.21
+
+        samtools addreplacerg -w \
+          -r "@RG\\tID:{wildcards.sample}\\tPL:ILLUMINA\\tLB:Lib-{wildcards.sample}\\tSM:{wildcards.sample}" \
+          -o {output.bam} {input}
+
+        samtools index {output.bam}
+        """
+
+# Rule 2: Create bamlist of bam files with read groups added
+rule bamlist_rg_bams:
+    input:
+        bam=expand("{wd}/rg_bams/{sample}.{species}.smrgmod.bam",
+            wd=WD,
+            sample=SAMPLES,
+            species=SPECIES),
+        bai=expand("{wd}/rg_bams/{sample}.{species}.smrgmod.bam.bai",
+            wd=WD,
+            sample=SAMPLES,
+            species=SPECIES)
+    output:
+        rg_bamlist="rg_bamlist.txt"
+    threads: 1
+    resources:
+        log_dir=str(log_dir), time_limit=30, memory_limit=1
+    run:
+        with open(output.rg_bamlist, "w") as out:
+            for s in SAMPLES:
+                out.write(WD + "/rg_bams/" + s + "." + SPECIES + ".smrgmod.bam\n")
+
+
+# Rule 3: Run freebayes variant calling on a genomic region
+rule freebayes_variant_calling:
+    input:
+        bamlist="rg_bamlist.txt",
+        reference=REF,
+        chunk_file=job_file_path  # to make sure the regions have been created, not needed as input
+    output:
+        WD + "/res_vcf/{region_id}." + SPECIES + "." + METHOD + "." + VERSION + ".vcf.gz"
+    params:
+        region=lambda wc: safe_to_region(wc.region_id)
+    threads: 4
+    resources:
+        log_dir=str(log_dir), time_limit=2880, memory_limit=32
+    shell:
+        """
+        module load freebayes/1.3.10
+
+        freebayes \
+          -f {input.reference} \
+          -L {input.bamlist} \
+          -r {params.region} \
+          -K -C 1 -F 0.01 -G 5 -E -1 \
+          --limit-coverage 500 \
+          -n {threads} -m 30 -q 20 \
+        | gzip -c > {output}
+        """
+
+############################################
+# Get list of region vcfs dynamically
+############################################
+
+def get_region_vcfs(wildcards):
+    region_ids = open(job_file_path).readlines()
+    region_ids = [region_to_safe(i.strip()) for i in region_ids if i.strip() != ""]
+    return expand("{wd}/res_vcf/{region_id}.{species}.{method}.{version}.vcf.gz", 
+        wd=WD,
+        region_id=region_ids,
+        species=SPECIES,
+        method=METHOD,
+        version=VERSION        
+    )  
+
+# Rule 4: Concatenate and order VCF files
+# Note: bcftools concat is single threaded. bcftools view can use multi-threads to compress output
+rule concatenate_vcf:
+    input:
+        get_region_vcfs
+    output:
+        WD + "/dest." + SPECIES + "." + METHOD + "." + VERSION + ".vcf.gz"
+    params:
+        samples=SAMPLES
+    threads: 1
+    resources:
+        log_dir=str(log_dir), time_limit=120, memory_limit=20
+    shell:
+        """
+        module load bcftools/1.17
+
+        printf "%s\n" {input} > vcf.list
+        printf "%s\n" {params.samples:q} > sample.ord
+
+        bcftools concat -f vcf.list \
+        | bcftools view -S sample.ord -i 'QUAL>20' - -Oz \
+        > {output}
+        """

@@ -1,7 +1,12 @@
+# apt installs python 3.8 which is incompatible with cutadapt 2.3
+# use micromamba to install python 3.6
+FROM mambaorg/micromamba:2.6.2 AS micromamba
+
 FROM ubuntu:20.04
 
 # version pinning
 ARG CUTADAPT_VERSION=2.3 \
+    FASTQC_VERSION=0.11.9 \
     GATK_VERSION=3.8-1-0 \
     PICARD_VERSION=2.20.2
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,24 +15,29 @@ ENV DEBIAN_FRONTEND=noninteractive
 # - tools
 # - libraries
 # - languages
-#   - Java 21
-#   - Python 3.8.2
+#   - Java 8
+#   - Python 3.6.15
 #   - R 3.6.3
 # - applications
 #   - bbmap 38.79
 #   - bwa 0.7.17
-#   - fastqc 0.11.9
 #   - htslib 1.10.2
 #   - samtools 1.10 
 # - snape-pooled dependency
     
+RUN mkdir -p /usr/share/binfmts
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential ca-certificates git parallel wget unzip \
         libbz2-dev liblzma-dev libopenblas-dev zlib1g-dev \
-        openjdk-8-jre python3-dev python3-pip r-base \
-        bbmap bwa fastqc libhts-dev samtools \
+        openjdk-8-jre r-base \
+        bbmap bwa libhts-dev samtools \
         ocaml-nox \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=micromamba /bin/micromamba /bin/micromamba
+RUN micromamba install --yes --name base --channel conda-forge python=3.6 && \
+    micromamba clean --all --yes
+ENV PATH=/root/.local/share/mamba/bin:$PATH
 
 # Python packages
 RUN pip install --no-cache-dir cutadapt==$CUTADAPT_VERSION
@@ -37,14 +47,20 @@ RUN R -e "install.packages(c('data.table'), repos='https://cran.r-project.org')"
 
 # Applications not available through package managers
 # Picard
-RUN mkdir -p /opt/picard/${PICARD_VERSION} && \
-    cd /opt/picard/${PICARD_VERSION} && \
-    wget -q https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard.jar
-ENV CLASSPATH="/opt/picard/${PICARD_VERSION}/picard.jar:$CLASSPATH"
+WORKDIR /opt/picard/${PICARD_VERSION}
+RUN wget -q https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard.jar
+ENV CLASSPATH="/opt/picard/${PICARD_VERSION}/picard.jar"
 ENV PICARD="/opt/picard/${PICARD_VERSION}/picard.jar"
 
-# GATK
+# FastQC - apt also installs java 11 which is incompatible with gatk
 WORKDIR /opt
+RUN wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip && \
+    unzip fastqc_v${FASTQC_VERSION}.zip && \
+    rm fastqc_v${FASTQC_VERSION}.zip && \
+    chmod +x FastQC/fastqc
+ENV PATH="/opt/FastQC:${PATH}"
+
+# GATK
 RUN wget -q https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-${GATK_VERSION}-gf15c1c3ef.tar.bz2 && \
     tar -xvf GenomeAnalysisTK-${GATK_VERSION}-gf15c1c3ef.tar.bz2 && \
     mv GenomeAnalysisTK-${GATK_VERSION}-gf15c1c3ef gatk && \
@@ -53,17 +69,16 @@ ENV CLASSPATH="/opt/gatk/GenomeAnalysisTK.jar:$CLASSPATH"
 ENV GATK="/opt/gatk/GenomeAnalysisTK.jar"
 
 # snape-pooled
-# deprecated in ocaml:
-# - Array.create -> Array.make
-# - String.uppercase -> String.uppercase_ascii
+#   deprecated in ocaml:
+#   - Array.create -> Array.make
+#   - String.uppercase -> String.uppercase_ascii
 
 RUN git clone https://github.com/DEST-bio/snape-pooled.git && \
     cd snape-pooled && \
     sed -i -e 's/Array.create/Array.make/g' \
            -e 's/String.uppercase/String.uppercase_ascii/g' \
         pooled.ml && \
-    make snape-pooled && \
-    cd ..
+    make snape-pooled
 
 ENV PATH="/opt/snape-pooled:${PATH}"
 
@@ -75,8 +90,11 @@ RUN git clone https://github.com/DEST-bio/DESTv3.git && \
 
 ARG CACHE_BUST=06:03:2020:1800
 
-ENV PATH="/opt/DESTv3/mappingPipeline/scripts:${PATH}" \
+ENV PATH="/opt/DESTv3/mappingPipeline/scripts:/usr/share/bbmap:${PATH}" \
     LC_ALL=C
+
+RUN apt-get update && apt-get install -y --no-install-recommends tabix \
+    && rm -rf /var/lib/apt/lists/*
 
 #Command to execute on "docker run" of this image
 ENTRYPOINT ["/bin/bash", "/opt/DESTv3/mappingPipeline/scripts/fq_to_sync_pipeline.v3.0.0.sh"]

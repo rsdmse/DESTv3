@@ -20,13 +20,13 @@ IFS=$'\n\t'
 ### ### sacct -j 49432588
 ### ### cat /scratch/aob2x/compBio_SNP_25Sept2023/logs/manual_annotate*.out
 
-module purge
+#module purge
 
 #module load  htslib/1.10.2 bcftools/1.9 intel/18.0 intelmpi/18.0 parallel/20200322 R/3.6.3 samtools vcftools
 
-module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0 R/4.3.1
+#module load htslib/1.17  bcftools/1.17 parallel/20250722 gcc/11.4.0 openmpi/4.1.4 python/3.11.4 perl/5.40.2 vcftools/0.1.16 bedtools/2.30.0 R/4.3.1
 
-echo "R_LIBS_USER=~/R/goolf/4.3" > ~/.Renviron
+#echo "R_LIBS_USER=~/R/goolf/4.3" > ~/.Renviron
 
 
 popSet=${1}

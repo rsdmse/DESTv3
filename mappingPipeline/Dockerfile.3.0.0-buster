@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM python:3.6.15-slim-buster
 
 # version pinning
 ARG CUTADAPT_VERSION=2.3 \
@@ -10,8 +10,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # - tools
 # - libraries
 # - languages
-#   - Java 21
-#   - Python 3.8.2
+#   - Java 8
+#   - Python 3.6.15
 #   - R 3.6.3
 # - applications
 #   - bbmap 38.79
@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential ca-certificates git parallel wget unzip \
         libbz2-dev liblzma-dev libopenblas-dev zlib1g-dev \
-        openjdk-8-jre python3-dev python3-pip r-base \
+        openjdk-8-jre r-base \
         bbmap bwa fastqc libhts-dev samtools \
         ocaml-nox \
     && rm -rf /var/lib/apt/lists/*

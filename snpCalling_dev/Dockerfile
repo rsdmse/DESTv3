@@ -39,7 +39,12 @@ RUN micromamba install --yes --name base -c conda-forge -c bioconda \
 ENV PATH=/root/.local/share/mamba/bin:$PATH
 
 # R packages
-RUN R -e "install.packages(c('data.table'), repos='https://cran.r-project.org')"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libssl-dev samtools \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('foreach','ggplot2'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('cowplot','data.table','doMC','epiR'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('Rsamtools','SeqArray'), repos='https://cran.r-project.org', Ncpus=4)"
 
 # snape-pooled
 #   deprecated in ocaml:

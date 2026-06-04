@@ -43,8 +43,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl-dev samtools \
     && rm -rf /var/lib/apt/lists/*
 RUN R -e "install.packages(c('foreach','ggplot2'), repos='https://cran.r-project.org', Ncpus=4)"
-RUN R -e "install.packages(c('cowplot','data.table','doMC','epiR'), repos='https://cran.r-project.org', Ncpus=4)"
-RUN R -e "install.packages(c('Rsamtools','SeqArray'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('cowplot','data.table','doMC'), repos='https://cran.r-project.org', Ncpus=4)"
+
+# everything below is for epiR
+# had to break up into smaller chunks to avoid segfaults
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libudunits2-dev libuv1-dev libxml2-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('dplyr'), repos='https://cran.r-project.org', Ncpus=4)"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gfortran libabsl-dev libfontconfig1-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('openssl'), repos='https://cran.r-project.org', Ncpus=4)"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libcairo2-dev libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('stringi'), repos='https://cran.r-project.org')"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('s2'), repos='https://cran.r-project.org', Ncpus=4)"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libharfbuzz-dev libfribidi-dev libgdal-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN R -e "install.packages(c('zip','sf'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('tidyr'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('fs'), repos='https://cran.r-project.org', Ncpus=2)"
+RUN R -e "install.packages(c('sass','xml2'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('fontBitstreamVera', 'fontLiberation', 'cachem', 'memoise', 'mime'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('fontquiver', 'evaluate', 'highr', 'xfun', 'yaml'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('systemfonts', 'textshaping'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('bslib', 'fontawesome', 'jquerylib', 'jsonlite', 'tinytex', 'timechange'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('gdtools', 'knitr', 'ragg', 'rmarkdown', 'uuid', 'BiasedUrn', 'pander'), repos='https://cran.r-project.org', Ncpus=4)"
+RUN R -e "install.packages(c('epiR'), repos='https://cran.r-project.org', Ncpus=4)"
+
+# not available
+#RUN R -e "install.packages(c('Rsamtools','SeqArray'), repos='https://cran.r-project.org', Ncpus=4)"
 
 # snape-pooled
 #   deprecated in ocaml:
